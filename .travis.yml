@@ -1,0 +1,11 @@
+language: go
+sudo: required
+before_install:
+  - sudo apt-get update -q
+  - sudo apt-get -qqy install build-essential git curl libcurl4-openssl-dev libjansson-dev gdb sudo netcat
+script:
+  - sudo make ci
+go:
+  - 1.11
+notifications:
+  slack: pepabo:CQkcN0cdvPSJvVsK2D48qYyV
