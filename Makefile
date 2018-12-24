@@ -75,9 +75,9 @@ key_wrapper_build: build_dir ## Build nss_stns
 		$(BUILD)/toml.o \
 		-lcurl -lpthread
 
-integration: build install depsdev ## Run integration test
+integration: build install depsdev STNS ## Run integration test
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Integration Testing$(RESET)"
-	cd .. && misc/server start
+	cp test/integration.toml /etc/stns/server/stns.conf && systemctl restart stns
 	test -d /usr/lib/x86_64-linux-gnu && ln -sf /usr/lib/libnss_stns.so.2.0 /usr/lib/x86_64-linux-gnu/libnss_stns.so.2.0 || true
 	mkdir -p /etc/stns/client
 	cp test/integration.conf /etc/stns/client/stns.conf
@@ -86,7 +86,6 @@ integration: build install depsdev ## Run integration test
 	sed -i -e 's/^group:.*/group: files stns/g' /etc/nsswitch.conf
 	grep test /etc/sudoers || echo 'test ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 	test/integration_test.sh
-	cd .. && misc/server stop
 
 install: install_lib install_key_wrapper ## Install stns
 
@@ -136,7 +135,7 @@ deb: source_for_deb ## Packaging for DEB
 	cd tmp.$(DIST) && \
 		tar xf libnss-stns-v2_$(VERSION).orig.tar.xz && \
 		cd libnss-stns-v2-$(VERSION) && \
-		dh_make --single --createorig -y && \
+		dh_make --single --cnreateorig -y && \
 		rm -rf debian/*.ex debian/*.EX debian/README.Debian && \
 		cp -v /stns/debian/* debian/ && \
 		sed -i -e 's/xenial/$(DIST)/g' debian/changelog && \
@@ -151,7 +150,9 @@ changelog:
 	git-chglog -o CHANGELOG.md
 
 docker:
+	docker rm -f libnss-stns
 	docker build -f dockerfiles/Dockerfile -t libnss_develop .
-	docker run --cap-add=SYS_PTRACE --security-opt="seccomp=unconfined" -v "`pwd`":/stns -it libnss_develop /bin/bash
+	docker run --privileged -d --name libnss-stns -v "`pwd`":/stns -it libnss_develop /sbin/init
+	docker exec -it libnss-stns /bin/bash
 
 .PHONY: depsdev test testdev build
