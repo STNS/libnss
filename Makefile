@@ -137,7 +137,7 @@ deb: source_for_deb ## Packaging for DEB
 	cd tmp.$(DIST) && \
 		tar xf libnss-stns-v2_$(VERSION).orig.tar.xz && \
 		cd libnss-stns-v2-$(VERSION) && \
-		dh_make --single --cnreateorig -y && \
+		dh_make --single --createorig -y && \
 		rm -rf debian/*.ex debian/*.EX debian/README.Debian && \
 		cp -v /stns/debian/* debian/ && \
 		sed -i -e 's/xenial/$(DIST)/g' debian/changelog && \
