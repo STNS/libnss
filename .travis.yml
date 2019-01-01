@@ -1,11 +1,45 @@
-language: go
-sudo: required
+matrix:
+  include:
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-4.9
+      env:
+         - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-5
+      env:
+         - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+      env:
+        - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
+
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 before_install:
-  - sudo apt-get update -q
-  - sudo apt-get -qqy install build-essential git curl libcurl4-openssl-dev libjansson-dev gdb sudo netcat
+    - eval "${MATRIX_EVAL}"
 script:
   - sudo make ci
-go:
-  - 1.11
 notifications:
   slack: pepabo:CQkcN0cdvPSJvVsK2D48qYyV
