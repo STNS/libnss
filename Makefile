@@ -75,7 +75,7 @@ key_wrapper_build: build_dir ## Build nss_stns
 		$(BUILD)/toml.o \
 		-lcurl -lpthread
 
-integration: build install depsdev STNS ## Run integration test
+integration: build install depsdev ## Run integration test
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Integration Testing$(RESET)"
 	cp test/integration.toml /etc/stns/server/stns.conf && systemctl restart stns
 	test -d /usr/lib/x86_64-linux-gnu && ln -sf /usr/lib/libnss_stns.so.2.0 /usr/lib/x86_64-linux-gnu/libnss_stns.so.2.0 || true
