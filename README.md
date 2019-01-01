@@ -12,15 +12,9 @@ You can see the details of STNS on [stns.jp](http://stns.jp)
 Please give me a pull request anything!
 
 ### Test
-#### Server
-```
-$ make depsdev
-$ make test
-```
 #### Client
 ```
 $ make docker
-# cd libnss
 # make depsdev
 # make test
 ```
