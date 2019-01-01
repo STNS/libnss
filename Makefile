@@ -148,6 +148,7 @@ deb: source_for_deb ## Packaging for DEB
 pkg: ## Create some distribution packages
 	rm -rf builds && mkdir builds
 	docker-compose up $(DISTS)
+
 changelog:
 	git-chglog -o CHANGELOG.md
 
@@ -156,5 +157,8 @@ docker:
 	docker build -f dockerfiles/Dockerfile -t libnss_develop .
 	docker run --privileged -d --name libnss-stns -v "`pwd`":/stns -it libnss_develop /sbin/init
 	docker exec -it libnss-stns /bin/bash
+
+github_release: ## Create some distribution packages
+	ghr -u STNS --replace v$(VERSION) builds/
 
 .PHONY: depsdev test testdev build
