@@ -81,8 +81,7 @@ integration: build install depsdev ## Run integration test
 	mkdir -p /etc/stns/server
 	cp test/integration_client.conf /etc/stns/client/stns.conf
 	cp test/integration_server.conf /etc/stns/server/stns.conf && service stns restart
-	curl http://localhost:1104/v1/users
-	cat /etc/nsswitch.conf
+	bash -l -c "while ! nc -vz -w 1 127.0.0.1 1104 > /dev/null 2>&1; do sleep 1; echo 'sleeping'; done"
 	test -d /usr/lib/x86_64-linux-gnu && ln -sf /usr/lib/libnss_stns.so.2.0 /usr/lib/x86_64-linux-gnu/libnss_stns.so.2.0 || true
 	sed -i -e 's/^passwd:.*/passwd: files stns/g' /etc/nsswitch.conf
 	sed -i -e 's/^shadow:.*/shadow: files stns/g' /etc/nsswitch.conf
