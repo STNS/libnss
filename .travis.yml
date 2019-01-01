@@ -39,10 +39,10 @@ matrix:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 before_install:
     - eval "${MATRIX_EVAL}"
-    - apt update -qqy
-    - apt install sudo
+    - sudo apt update -qqy
+    - sudo apt install sudo
     - curl -fsSL https://repo.stns.jp/scripts/apt-repo.sh | sh
-    - apt install -qqy stns-v2
+    - sudo apt install -qqy stns-v2
 script:
   - sudo make ci
 notifications:
