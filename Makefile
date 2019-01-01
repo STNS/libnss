@@ -79,8 +79,7 @@ integration: build install depsdev ## Run integration test
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Integration Testing$(RESET)"
 	mkdir -p /etc/stns/server
 	mkdir -p /etc/stns/client
-	ls -ltr /etc/stns
-	cp test/integration.toml /etc/stns/server/stns.conf && systemctl restart stns
+	cp test/integration.toml /etc/stns/server/stns.conf && service stns restart
 	test -d /usr/lib/x86_64-linux-gnu && ln -sf /usr/lib/libnss_stns.so.2.0 /usr/lib/x86_64-linux-gnu/libnss_stns.so.2.0 || true
 	sed -i -e 's/^passwd:.*/passwd: files stns/g' /etc/nsswitch.conf
 	sed -i -e 's/^shadow:.*/shadow: files stns/g' /etc/nsswitch.conf
