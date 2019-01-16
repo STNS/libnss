@@ -1,24 +1,24 @@
 #ifndef STNS_H
 #define STNS_H
 
+#include "parson.h"
+#include <ctype.h>
 #include <curl/curl.h>
 #include <errno.h>
+#include <grp.h>
+#include <nss.h>
+#include <pthread.h>
+#include <pwd.h>
+#include <regex.h>
+#include <shadow.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "toml.h"
-#include "parson.h"
-#include <syslog.h>
-#include <nss.h>
-#include <grp.h>
-#include <pwd.h>
-#include <shadow.h>
-#include <pthread.h>
 #include <sys/stat.h>
+#include <syslog.h>
 #include <unistd.h>
-#include <ctype.h>
-#include <regex.h>
+#include "toml.h"
 #define STNS_VERSION "2.0.0"
 #define STNS_VERSION_WITH_NAME "stns/" STNS_VERSION
 // 10MB
@@ -127,6 +127,7 @@ extern void set_group_lowest_id(int);
     curl_result = stns_request(&c, url, &r);                                                                           \
                                                                                                                        \
     if (curl_result != CURLE_OK) {                                                                                     \
+      syslog(LOG_ERR, "%s(stns)[L%d] tsurubee http error code: %d", __func__, __LINE__, curl_result);                  \
       if (r.status_code == STNS_HTTP_NOTFOUND) {                                                                       \
         return NSS_STATUS_NOTFOUND;                                                                                    \
       }                                                                                                                \
