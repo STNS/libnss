@@ -156,7 +156,8 @@ extern void set_group_lowest_id(int);
 #define STNS_SET_ENTRIES(type, ltype, resource, query)                                                                 \
   enum nss_status inner_nss_stns_set##type##ent(char *data, stns_conf_t *c)                                            \
   {                                                                                                                    \
-    pthread_mutex_lock(&type##ent_mutex);                                                                              \
+    if (pthread_mutex_trylock(&type##ent_mutex) != 0)                                                                  \
+      return NSS_STATUS_UNAVAIL;                                                                                       \
                                                                                                                        \
     entries          = NULL;                                                                                           \
     entry_idx        = 0;                                                                                              \
@@ -197,7 +198,8 @@ extern void set_group_lowest_id(int);
                                                                                                                        \
   enum nss_status _nss_stns_end##type##ent(void)                                                                       \
   {                                                                                                                    \
-    pthread_mutex_lock(&type##ent_mutex);                                                                              \
+    if (pthread_mutex_trylock(&type##ent_mutex) != 0)                                                                  \
+      return NSS_STATUS_UNAVAIL;                                                                                       \
     entry_idx = 0;                                                                                                     \
     if (entry_idx != 0)                                                                                                \
       json_value_free(entries);                                                                                        \
@@ -210,7 +212,8 @@ extern void set_group_lowest_id(int);
                                                   int *errnop)                                                         \
   {                                                                                                                    \
     enum nss_status ret = NSS_STATUS_SUCCESS;                                                                          \
-    pthread_mutex_lock(&type##ent_mutex);                                                                              \
+    if (pthread_mutex_trylock(&type##ent_mutex) != 0)                                                                  \
+      return NSS_STATUS_UNAVAIL;                                                                                       \
     JSON_Array *array_entries = json_value_get_array(entries);                                                         \
                                                                                                                        \
     if (array_entries == NULL) {                                                                                       \
@@ -248,14 +251,16 @@ extern void set_group_lowest_id(int);
 #define SET_GET_HIGH_LOW_ID(highest_or_lowest, user_or_group)                                                          \
   void set_##user_or_group##_##highest_or_lowest##_id(int id)                                                          \
   {                                                                                                                    \
-    pthread_mutex_lock(&user_or_group##_mutex);                                                                        \
+    if (pthread_mutex_trylock(&user_or_group##_mutex) != 0)                                                            \
+      return;                                                                                                          \
     highest_or_lowest##_##user_or_group##_id = id;                                                                     \
     pthread_mutex_unlock(&user_or_group##_mutex);                                                                      \
   }                                                                                                                    \
   int get_##user_or_group##_##highest_or_lowest##_id(void)                                                             \
   {                                                                                                                    \
     int r;                                                                                                             \
-    pthread_mutex_lock(&user_or_group##_mutex);                                                                        \
+    if (pthread_mutex_trylock(&user_or_group##_mutex) != 0)                                                            \
+      return 0;                                                                                                        \
     r = highest_or_lowest##_##user_or_group##_id;                                                                      \
     pthread_mutex_unlock(&user_or_group##_mutex);                                                                      \
     return r;                                                                                                          \
