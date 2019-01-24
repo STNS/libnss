@@ -1,7 +1,7 @@
 Summary:          SimpleTomlNameService Nss Module
 Name:             libnss-stns-v2
-Version:          2.0.3
-Release:          2
+Version:          2.1.0
+Release:          1
 License:          GPLv3
 URL:              https://github.com/STNS/STNS
 Source:           %{name}-%{version}.tar.gz
@@ -57,6 +57,8 @@ install -m 644 stns.conf.example %{buildroot}%{_sysconfdir}/stns/client/stns.con
 %config(noreplace) /etc/stns/client/stns.conf
 
 %changelog
+* Thu Jun 24 2019 pyama86 <www.kazu.com@gmail.com> - 2.1.0-1
+- #1 There are cases where mutex deadlocks
 * Sat Nov 10 2018 pyama86 <www.kazu.com@gmail.com> - 2.0.3-1
 - #80 Ignore sigpipe signal in key wrapper
 * Fri Nov 2 2018 pyama86 <www.kazu.com@gmail.com> - 2.0.2-1
