@@ -348,7 +348,7 @@ static void *delete_cache_files(void *data)
   char dir[MAXBUF];
   sprintf(dir, "%s/%d", c->cache_dir, geteuid());
 
-  if (pthread_mutex_trylock(&delete_mutex) != 0)
+  if (pthread_mutex_retrylock(&delete_mutex) != 0)
     return NULL;
   if ((dp = opendir(dir)) == NULL) {
     syslog(LOG_ERR, "%s(stns)[L%d] cannot open %s: %s", __func__, __LINE__, dir, strerror(errno));
@@ -412,7 +412,7 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
           return CURLE_HTTP_RETURNED_ERROR;
         }
 
-        if (pthread_mutex_trylock(&delete_mutex) != 0)
+        if (pthread_mutex_retrylock(&delete_mutex) != 0)
           goto request;
         if (!stns_import_file(fpath, res)) {
           pthread_mutex_unlock(&delete_mutex);
@@ -456,7 +456,7 @@ request:
 
   if (c->cache) {
     pthread_join(pthread, NULL);
-    if (pthread_mutex_trylock(&delete_mutex) == 0) {
+    if (pthread_mutex_retrylock(&delete_mutex) == 0) {
       stns_export_file(dpath, fpath, res->data);
       pthread_mutex_unlock(&delete_mutex);
     }
@@ -532,4 +532,18 @@ err:
   if (arg != NULL)
     free(c);
   return 0;
+}
+
+extern int pthread_mutex_retrylock(pthread_mutex_t *mutex)
+{
+  int i   = 0;
+  int ret = 0;
+  for (;;) {
+    ret = pthread_mutex_trylock(mutex);
+    if (ret == 0 || i >= STNS_LOCK_RETRY)
+      break;
+    usleep(STNS_LOCK_INTERVAL_MSEC * 1000);
+    i++;
+  }
+  return ret;
 }
