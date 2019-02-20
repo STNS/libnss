@@ -58,6 +58,7 @@ void stns_load_config(char *filename, stns_conf_t *c)
 {
   char errbuf[200];
   const char *raw;
+  toml_table_t *in_tab;
 
   FILE *fp = fopen(filename, "r");
   if (!fp) {
@@ -81,6 +82,8 @@ void stns_load_config(char *filename, stns_conf_t *c)
   GET_TOML_BYKEY(query_wrapper, toml_rtos, NULL, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(chain_ssh_wrapper, toml_rtos, NULL, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(http_proxy, toml_rtos, NULL, TOML_NULL_OR_INT);
+  GET_TOML_BY_TABLE_KEY(tls, key, toml_rtos, NULL, TOML_NULL_OR_INT);
+  GET_TOML_BY_TABLE_KEY(tls, cert, toml_rtos, NULL, TOML_NULL_OR_INT);
 
   GET_TOML_BYKEY(uid_shift, toml_rtoi, 0, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(gid_shift, toml_rtoi, 0, TOML_NULL_OR_INT);
@@ -223,6 +226,11 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
   curl_easy_setopt(curl, CURLOPT_HEADERDATA, c);
   curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
   curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
+
+  if (c->tls_cert != NULL && c->tls_key != NULL) {
+    curl_easy_setopt(curl, CURLOPT_SSLCERT, c->tls_cert);
+    curl_easy_setopt(curl, CURLOPT_SSLKEY, c->tls_key);
+  }
 
   if (c->user != NULL) {
     curl_easy_setopt(curl, CURLOPT_USERNAME, c->user);

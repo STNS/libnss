@@ -153,7 +153,7 @@ changelog:
 	git-chglog -o CHANGELOG.md
 
 docker:
-	docker rm -f libnss-stns
+	docker rm -f libnss-stns | true
 	docker build -f dockerfiles/Dockerfile -t libnss_develop .
 	docker run --privileged -d --name libnss-stns -v "`pwd`":/stns -it libnss_develop /sbin/init
 	docker exec -it libnss-stns /bin/bash
