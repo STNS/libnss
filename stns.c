@@ -227,6 +227,11 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
   curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
   curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
 
+  if (c->tls_cert != NULL && c->tls_key != NULL) {
+    curl_easy_setopt(curl, CURLOPT_SSLCERT, c->tls_cert);
+    curl_easy_setopt(curl, CURLOPT_SSLKEY, c->tls_key);
+  }
+
   if (c->user != NULL) {
     curl_easy_setopt(curl, CURLOPT_USERNAME, c->user);
   }
