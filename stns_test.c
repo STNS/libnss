@@ -54,6 +54,8 @@ Test(stns_load_config, load_ok)
   cr_assert_eq(c.request_timeout, 3);
   cr_assert_eq(c.request_retry, 3);
   cr_assert_eq(c.negative_cache_ttl, 10);
+  cr_assert_str_eq(c.tls_cert, "example_cert");
+  cr_assert_str_eq(c.tls_key, "example_key");
 }
 
 Test(stns_request, http_request)

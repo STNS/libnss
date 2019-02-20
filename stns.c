@@ -58,6 +58,7 @@ void stns_load_config(char *filename, stns_conf_t *c)
 {
   char errbuf[200];
   const char *raw;
+  toml_table_t *in_tab;
 
   FILE *fp = fopen(filename, "r");
   if (!fp) {
@@ -81,6 +82,8 @@ void stns_load_config(char *filename, stns_conf_t *c)
   GET_TOML_BYKEY(query_wrapper, toml_rtos, NULL, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(chain_ssh_wrapper, toml_rtos, NULL, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(http_proxy, toml_rtos, NULL, TOML_NULL_OR_INT);
+  GET_TOML_BY_TABLE_KEY(tls, key, toml_rtos, NULL, TOML_NULL_OR_INT);
+  GET_TOML_BY_TABLE_KEY(tls, cert, toml_rtos, NULL, TOML_NULL_OR_INT);
 
   GET_TOML_BYKEY(uid_shift, toml_rtoi, 0, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(gid_shift, toml_rtoi, 0, TOML_NULL_OR_INT);

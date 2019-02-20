@@ -47,6 +47,8 @@ struct stns_conf_t {
   char *chain_ssh_wrapper;
   char *http_proxy;
   char *cache_dir;
+  char *tls_cert;
+  char *tls_key;
   int uid_shift;
   int gid_shift;
   int ssl_verify;
@@ -277,6 +279,16 @@ extern void set_group_lowest_id(int);
     }                                                                                                                  \
   } else {                                                                                                             \
     str_or_int(m, empty)                                                                                               \
+  }
+#define GET_TOML_BY_TABLE_KEY(t, m, method, empty, str_or_int)                                                         \
+  if (0 != (in_tab = toml_table_in(tab, #t))) {                                                                        \
+    if (0 != (raw = toml_raw_in(in_tab, #m))) {                                                                        \
+      if (0 != method(raw, &c->t##_##m)) {                                                                             \
+        syslog(LOG_ERR, "%s(stns)[L%d] cannot parse toml file:%s key:%s", __func__, __LINE__, filename, #m);           \
+      }                                                                                                                \
+    } else {                                                                                                           \
+      str_or_int(t##_##m, empty)                                                                                       \
+    }                                                                                                                  \
   }
 
 #define UNLOAD_TOML_BYKEY(m)                                                                                           \
