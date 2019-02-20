@@ -289,6 +289,8 @@ extern void set_group_lowest_id(int);
     } else {                                                                                                           \
       str_or_int(t##_##m, empty)                                                                                       \
     }                                                                                                                  \
+  } else {                                                                                                             \
+    str_or_int(t##_##m, empty)                                                                                         \
   }
 
 #define UNLOAD_TOML_BYKEY(m)                                                                                           \

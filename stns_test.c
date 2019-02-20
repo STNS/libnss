@@ -71,6 +71,8 @@ Test(stns_request, http_request)
   c.user            = NULL;
   c.password        = NULL;
   c.query_wrapper   = NULL;
+  c.tls_cert        = NULL;
+  c.tls_key         = NULL;
   c.request_timeout = 3;
   c.request_retry   = 3;
   c.auth_token      = NULL;
