@@ -1,7 +1,7 @@
 Summary:          SimpleTomlNameService Nss Module
 Name:             libnss-stns-v2
 Version:          2.2.0
-Release:          2
+Release:          1
 License:          GPLv3
 URL:              https://github.com/STNS/STNS
 Source:           %{name}-%{version}.tar.gz
