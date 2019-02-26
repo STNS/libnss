@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
 
   if (c.chain_ssh_wrapper != NULL) {
     stns_response_t cr;
-    if (stns_exec_cmd(c.chain_ssh_wrapper, argv[optind], &cr)) {
+    if (stns_exec_cmd(c.chain_ssh_wrapper, argv[optind], &cr) == 0) {
       key_size = cr.size;
       keys     = (char *)realloc(keys, key_size + strlen(keys) + 1);
       strcpy(&(keys[size]), cr.data);

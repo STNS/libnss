@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ $1 == "test" ]]; then
+if [[ $1 == "users?name=test" ]]; then
   echo "ok"
   exit 0
 fi
