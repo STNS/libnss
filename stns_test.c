@@ -120,9 +120,9 @@ Test(stns_request, wrapper_request_ok)
   c.cache_dir     = "/var/cache/stns";
   c.cache         = 0;
 
-  res = stns_request(&c, "test", &r);
+  res = stns_request(&c, "users?name=test", &r);
   cr_assert_str_eq(r.data, "ok\n");
-  cr_assert_eq(res, 1);
+  cr_assert_eq(res, 0);
 }
 
 Test(stns_request, wrapper_request_ng)
@@ -154,9 +154,9 @@ Test(stns_exec_cmd, ok)
 {
   char expect_body[1024];
   stns_response_t result;
-  int r = stns_exec_cmd("test/dummy.sh", "test", &result);
+  int r = stns_exec_cmd("test/dummy.sh", "users?name=test", &result);
 
-  cr_assert_eq(r, 1);
+  cr_assert_eq(r, 0);
   cr_expect_str_eq(result.data, "aaabbbccc\nddd\n");
   free(result.data);
 }

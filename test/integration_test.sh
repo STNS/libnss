@@ -72,7 +72,7 @@ test_key_wrapper()
 key2
 aaabbbccc
 ddd" \
-    "$(tmp/libs/stns-key-wrapper test test)"
+    "$(tmp/libs/stns-key-wrapper test)"
 
   assertEquals \
     "http request failed user: fuga" \

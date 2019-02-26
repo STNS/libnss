@@ -497,7 +497,7 @@ int stns_exec_cmd(char *cmd, char *arg, stns_response_t *r)
   r->size        = 0;
   r->status_code = (long)200;
 
-  if (!match("^[a-z0-9_.]+$", arg)) {
+  if (!match("^[a-z0-9_.=\?]+$", arg)) {
     return 0;
   }
 
@@ -535,11 +535,11 @@ int stns_exec_cmd(char *cmd, char *arg, stns_response_t *r)
     free(c);
 
   r->size = total_len;
-  return 1;
+  return 0;
 err:
   if (arg != NULL)
     free(c);
-  return 0;
+  return 1;
 }
 
 extern int pthread_mutex_retrylock(pthread_mutex_t *mutex)
