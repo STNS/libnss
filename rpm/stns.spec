@@ -1,6 +1,6 @@
 Summary:          SimpleTomlNameService Nss Module
 Name:             libnss-stns-v2
-Version:          2.2.0
+Version:          2.2.1
 Release:          1
 License:          GPLv3
 URL:              https://github.com/STNS/STNS
@@ -58,6 +58,8 @@ install -m 644 stns.conf.example %{buildroot}%{_sysconfdir}/stns/client/stns.con
 %config(noreplace) /etc/stns/client/stns.conf
 
 %changelog
+* Tue Feb 26 2019 pyama86 <www.kazu.com@gmail.com> - 2.2.1-1
+- #5 url validation was wrong(thanks: @miya-sun)
 * Thu Feb 21 2019 pyama86 <www.kazu.com@gmail.com> - 2.2.0-1
 - #3 Support TLS Authentication
 * Thu Jan 24 2019 pyama86 <www.kazu.com@gmail.com> - 2.1.0-1
