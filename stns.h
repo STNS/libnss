@@ -37,6 +37,17 @@ struct stns_response_t {
   long status_code;
 };
 
+typedef struct stns_user_httpheader_t stns_user_httpheader_t;
+struct stns_user_httpheader_t {
+  char *key;
+  char *value;
+};
+typedef struct stns_user_httpheaders_t stns_user_httpheaders_t;
+struct stns_user_httpheaders_t {
+  stns_user_httpheader_t *headers;
+  size_t size;
+};
+
 typedef struct stns_conf_t stns_conf_t;
 struct stns_conf_t {
   char *api_endpoint;
@@ -49,6 +60,7 @@ struct stns_conf_t {
   char *cache_dir;
   char *tls_cert;
   char *tls_key;
+  stns_user_httpheaders_t *http_headers;
   int uid_shift;
   int gid_shift;
   int ssl_verify;

@@ -1,6 +1,5 @@
 #include "stns.h"
 #include "stns_test.h"
-
 void readfile(char *file, char **result)
 {
   FILE *fp;
@@ -56,6 +55,9 @@ Test(stns_load_config, load_ok)
   cr_assert_eq(c.negative_cache_ttl, 10);
   cr_assert_str_eq(c.tls_cert, "example_cert");
   cr_assert_str_eq(c.tls_key, "example_key");
+  cr_assert_eq(c.http_headers->size, 1);
+  cr_assert_str_eq(c.http_headers->headers[0].key, "X-API-TOKEN");
+  cr_assert_str_eq(c.http_headers->headers[0].value, "token");
 }
 
 Test(stns_request, http_request)
@@ -73,6 +75,7 @@ Test(stns_request, http_request)
   c.query_wrapper   = NULL;
   c.tls_cert        = NULL;
   c.tls_key         = NULL;
+  c.http_headers    = NULL;
   c.request_timeout = 3;
   c.request_retry   = 3;
   c.auth_token      = NULL;
@@ -101,6 +104,7 @@ Test(stns_request, http_cache)
   c.request_timeout = 3;
   c.request_retry   = 3;
   c.auth_token      = NULL;
+  c.http_headers    = NULL;
 
   stns_request(&c, "get?example", &r);
   cr_assert_eq(stat(path, &st), 0);
@@ -137,6 +141,47 @@ Test(stns_request, wrapper_request_ng)
   res = stns_request(&c, NULL, &r);
   cr_assert_eq(res, 22);
 }
+
+Test(stns_request, http_request_with_header)
+{
+  stns_conf_t c;
+  stns_response_t r;
+
+  c.api_endpoint  = "https://httpbin.org";
+  c.http_proxy    = NULL;
+  c.cache_dir     = "/var/cache/stns";
+  c.cache         = 0;
+  c.user          = NULL;
+  c.password      = NULL;
+  c.query_wrapper = NULL;
+  c.tls_cert      = NULL;
+  c.tls_key       = NULL;
+
+  c.http_headers                       = (stns_user_httpheaders_t *)malloc(sizeof(stns_user_httpheaders_t));
+  stns_user_httpheader_t *http_headers = (stns_user_httpheader_t *)malloc(sizeof(stns_user_httpheader_t) * 2);
+  http_headers[0].key                  = "test_key1";
+  http_headers[0].value                = "test_value1";
+  http_headers[1].key                  = "test_key2";
+  http_headers[1].value                = "test_value2";
+  c.http_headers->headers              = http_headers;
+  c.http_headers->size                 = 2;
+
+  c.request_timeout = 3;
+  c.request_retry   = 3;
+  c.auth_token      = NULL;
+  stns_request(&c, "headers", &r);
+
+  cr_assert_str_eq(r.data, "{\n\
+  \"headers\": {\n\
+    \"Accept\": \"*/*\", \n\
+    \"Host\": \"httpbin.org\", \n\
+    \"Test-Key1\": \"test_value1\", \n\
+    \"Test-Key2\": \"test_value2\", \n\
+    \"User-Agent\": \"stns/2.0.0\"\n\
+  }\n\
+}\n");
+}
+
 Test(stns_request_available, ok)
 {
   char expect_body[1024];

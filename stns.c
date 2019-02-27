@@ -57,7 +57,7 @@ static void stns_force_create_cache_dir(stns_conf_t *c)
 void stns_load_config(char *filename, stns_conf_t *c)
 {
   char errbuf[200];
-  const char *raw;
+  const char *raw, *key;
   toml_table_t *in_tab;
 
   FILE *fp = fopen(filename, "r");
@@ -98,6 +98,33 @@ void stns_load_config(char *filename, stns_conf_t *c)
   TRIM_SLASH(api_endpoint)
   TRIM_SLASH(cache_dir)
 
+  int header_size                      = 0;
+  stns_user_httpheader_t *http_headers = NULL;
+
+  if (0 != (in_tab = toml_table_in(tab, "http_headers"))) {
+    c->http_headers = (stns_user_httpheaders_t *)malloc(sizeof(stns_user_httpheaders_t));
+
+    while (1) {
+      if (0 != (key = toml_key_in(in_tab, header_size)) && 0 != (raw = toml_raw_in(in_tab, key))) {
+        if (header_size == 0)
+          http_headers = (stns_user_httpheader_t *)malloc(sizeof(stns_user_httpheader_t) * header_size);
+        else
+          http_headers = (stns_user_httpheader_t *)realloc(http_headers, sizeof(stns_user_httpheader_t) * header_size);
+
+        if (0 != toml_rtos(raw, &http_headers[header_size].value)) {
+          syslog(LOG_ERR, "%s(stns)[L%d] cannot parse toml file:%s key:%s", __func__, __LINE__, filename, key);
+        }
+        http_headers[header_size].key = strdup(key);
+        header_size++;
+      } else {
+        break;
+      }
+    }
+    c->http_headers->headers = http_headers;
+    c->http_headers->size    = (size_t)header_size;
+  } else {
+    c->http_headers = NULL;
+  }
   stns_force_create_cache_dir(c);
   fclose(fp);
   toml_free(tab);
@@ -185,6 +212,7 @@ static size_t response_callback(void *buffer, size_t size, size_t nmemb, void *u
 static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *res)
 {
   char *auth;
+  char *in_headers = NULL;
   char *url;
   CURL *curl;
   CURLcode result;
@@ -206,6 +234,21 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
 
   if (auth != NULL) {
     headers = curl_slist_append(headers, auth);
+  }
+
+  if (c->http_headers != NULL) {
+
+    int i, size = 0;
+    for (i = 0; i < c->http_headers->size; i++) {
+      size += strlen(c->http_headers->headers[i].key) + strlen(c->http_headers->headers[i].key) + 3;
+      if (in_headers == NULL)
+        in_headers = (char *)malloc(size);
+      else
+        in_headers = (char *)realloc(in_headers, size);
+
+      sprintf(in_headers, "%s: %s", c->http_headers->headers[i].key, c->http_headers->headers[i].value);
+      headers = curl_slist_append(headers, in_headers);
+    }
   }
 
 #ifdef DEBUG
@@ -256,6 +299,7 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
   }
 
   free(auth);
+  free(in_headers);
   free(url);
   curl_easy_cleanup(curl);
   curl_slist_free_all(headers);
