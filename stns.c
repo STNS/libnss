@@ -541,7 +541,7 @@ int stns_exec_cmd(char *cmd, char *arg, stns_response_t *r)
   r->size        = 0;
   r->status_code = (long)200;
 
-  if (!match("^[a-z0-9_.=\?]+$", arg)) {
+  if (!match("^[a-zA-Z0-9_.=\?]+$", arg)) {
     return 0;
   }
 
