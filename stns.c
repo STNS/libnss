@@ -294,6 +294,7 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
     syslog(LOG_ERR, "%s(stns)[L%d] http request failed: %s", __func__, __LINE__, curl_easy_strerror(result));
     res->data = NULL;
     res->size = 0;
+    res->status_code = code;
     result = CURLE_HTTP_RETURNED_ERROR;
   }
 
