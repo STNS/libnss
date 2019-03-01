@@ -268,7 +268,6 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, res);
   curl_easy_setopt(curl, CURLOPT_HEADERDATA, c);
   curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
-  curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
 
   if (c->tls_cert != NULL && c->tls_key != NULL) {
     curl_easy_setopt(curl, CURLOPT_SSLCERT, c->tls_cert);
@@ -289,13 +288,13 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
 
   result = curl_easy_perform(curl);
 
-  if (result != CURLE_OK) {
+  long code;
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+  if (code >= 400) {
     syslog(LOG_ERR, "%s(stns)[L%d] http request failed: %s", __func__, __LINE__, curl_easy_strerror(result));
-    if (result == CURLE_HTTP_RETURNED_ERROR) {
-      long code;
-      curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
-      res->status_code = code;
-    }
+    res->data = NULL;
+    res->size = 0;
+    result = CURLE_HTTP_RETURNED_ERROR;
   }
 
   free(auth);
