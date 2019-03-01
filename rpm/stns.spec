@@ -1,6 +1,6 @@
 Summary:          SimpleTomlNameService Nss Module
 Name:             libnss-stns-v2
-Version:          2.2.2
+Version:          2.2.3
 Release:          1
 License:          GPLv3
 URL:              https://github.com/STNS/STNS
@@ -58,6 +58,9 @@ install -m 644 stns.conf.example %{buildroot}%{_sysconfdir}/stns/client/stns.con
 %config(noreplace) /etc/stns/client/stns.conf
 
 %changelog
+* Fri Mar 1 2019 pyama86 <www.kazu.com@gmail.com> - 2.2.3-1
+- #7 allow uppercase alphabet in validation(@miya-sun)
+- #8 Call header_handler even if server returned 4xx response(@ry023)
 * Wed Feb 27 2019 pyama86 <www.kazu.com@gmail.com> - 2.2.2-1
 - #6 support http header
 * Tue Feb 26 2019 pyama86 <www.kazu.com@gmail.com> - 2.2.1-1

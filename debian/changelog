@@ -1,3 +1,10 @@
+libnss-stns-v2 (2.2.3-1) xenial; urgency=medium
+
+  * #7 allow uppercase alphabet in validation(@miya-sun)
+  * #8 Call header_handler even if server returned 4xx response(@ry023)
+
+ -- pyama86 <www.kazu.com@gmail.com>  Fri, 1 Mar 2019 15:30:00 +0900
+
 libnss-stns-v2 (2.2.2-1) xenial; urgency=medium
 
   * #6 support http header
