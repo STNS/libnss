@@ -110,6 +110,16 @@ Test(stns_request, http_cache)
   cr_assert_eq(stat(path, &st), -1);
 }
 
+Test(stns_request, http_notfound)
+{
+  struct stat st;
+  stns_conf_t c = test_conf();
+  stns_response_t r;
+  c.cache = 0;
+
+  cr_assert_eq(stns_request(&c, "status/404", &r), CURLE_HTTP_RETURNED_ERROR);
+}
+
 Test(stns_request, wrapper_request_ok)
 {
   stns_conf_t c = test_conf();
