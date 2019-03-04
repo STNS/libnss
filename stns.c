@@ -240,7 +240,7 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
 
     int i, size = 0;
     for (i = 0; i < c->http_headers->size; i++) {
-      size += strlen(c->http_headers->headers[i].key) + strlen(c->http_headers->headers[i].key) + 3;
+      size += strlen(c->http_headers->headers[i].key) + strlen(c->http_headers->headers[i].value) + 3;
       if (in_headers == NULL)
         in_headers = (char *)malloc(size);
       else
