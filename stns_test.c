@@ -1,5 +1,25 @@
 #include "stns.h"
 #include "stns_test.h"
+
+stns_conf_t test_conf()
+{
+  stns_conf_t c;
+  c.api_endpoint    = "https://httpbin.org";
+  c.http_proxy      = NULL;
+  c.cache_dir       = "/var/cache/stns";
+  c.cache           = 0;
+  c.user            = NULL;
+  c.ssl_verify      = 0;
+  c.password        = NULL;
+  c.query_wrapper   = NULL;
+  c.tls_cert        = NULL;
+  c.tls_key         = NULL;
+  c.http_headers    = NULL;
+  c.request_timeout = 3;
+  c.request_retry   = 3;
+  c.auth_token      = NULL;
+  return c;
+}
 void readfile(char *file, char **result)
 {
   FILE *fp;
@@ -63,23 +83,8 @@ Test(stns_load_config, load_ok)
 Test(stns_request, http_request)
 {
   char expect_body[1024];
-  stns_conf_t c;
+  stns_conf_t c = test_conf();
   stns_response_t r;
-
-  c.api_endpoint    = "https://httpbin.org";
-  c.http_proxy      = NULL;
-  c.cache_dir       = "/var/cache/stns";
-  c.cache           = 0;
-  c.user            = NULL;
-  c.ssl_verify      = 0;
-  c.password        = NULL;
-  c.query_wrapper   = NULL;
-  c.tls_cert        = NULL;
-  c.tls_key         = NULL;
-  c.http_headers    = NULL;
-  c.request_timeout = 3;
-  c.request_retry   = 3;
-  c.auth_token      = NULL;
   stns_request(&c, "user-agent", &r);
 
   sprintf(expect_body, "{\n  \"user-agent\": \"%s\"\n}\n", STNS_VERSION_WITH_NAME);
@@ -89,24 +94,13 @@ Test(stns_request, http_request)
 Test(stns_request, http_cache)
 {
   struct stat st;
-  stns_conf_t c;
+  stns_conf_t c = test_conf();
   stns_response_t r;
   char path[MAXBUF];
   sprintf(path, "/var/cache/stns/%d/%s", geteuid(), "get%3Fexample");
 
-  c.api_endpoint    = "https://httpbin.org";
-  c.http_proxy      = NULL;
-  c.cache_dir       = "/var/cache/stns";
-  c.cache           = 1;
-  c.cache_ttl       = 2;
-  c.ssl_verify      = 0;
-  c.user            = NULL;
-  c.password        = NULL;
-  c.query_wrapper   = NULL;
-  c.request_timeout = 3;
-  c.request_retry   = 3;
-  c.auth_token      = NULL;
-  c.http_headers    = NULL;
+  c.cache     = 1;
+  c.cache_ttl = 2;
 
   stns_request(&c, "get?example", &r);
   cr_assert_eq(stat(path, &st), 0);
@@ -118,7 +112,7 @@ Test(stns_request, http_cache)
 
 Test(stns_request, wrapper_request_ok)
 {
-  stns_conf_t c;
+  stns_conf_t c = test_conf();
   stns_response_t r;
   int res;
 
@@ -133,7 +127,7 @@ Test(stns_request, wrapper_request_ok)
 
 Test(stns_request, wrapper_request_ng)
 {
-  stns_conf_t c;
+  stns_conf_t c = test_conf();
   stns_response_t r;
   int res;
 
@@ -146,19 +140,8 @@ Test(stns_request, wrapper_request_ng)
 
 Test(stns_request, http_request_with_header)
 {
-  stns_conf_t c;
+  stns_conf_t c = test_conf();
   stns_response_t r;
-
-  c.api_endpoint  = "https://httpbin.org";
-  c.http_proxy    = NULL;
-  c.cache_dir     = "/var/cache/stns";
-  c.cache         = 0;
-  c.user          = NULL;
-  c.password      = NULL;
-  c.query_wrapper = NULL;
-  c.tls_cert      = NULL;
-  c.tls_key       = NULL;
-  c.ssl_verify    = 0;
 
   c.http_headers                       = (stns_user_httpheaders_t *)malloc(sizeof(stns_user_httpheaders_t));
   stns_user_httpheader_t *http_headers = (stns_user_httpheader_t *)malloc(sizeof(stns_user_httpheader_t) * 2);

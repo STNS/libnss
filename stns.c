@@ -211,16 +211,13 @@ static size_t response_callback(void *buffer, size_t size, size_t nmemb, void *u
     return 0;
   }
 
-  if (!res->data) {
-    res->data = (char *)malloc(segsize + 1);
-  } else {
-    res->data = (char *)realloc(res->data, res->size + segsize + 1);
+  res->data = (char *)realloc(res->data, res->size + segsize + 1);
+
+  if (res->data) {
+    memcpy(&(res->data[res->size]), buffer, segsize);
+    res->size += segsize;
+    res->data[res->size] = 0;
   }
-
-  memcpy(&(res->data[res->size]), buffer, segsize);
-  res->size += segsize;
-  res->data[res->size] = 0;
-
   return segsize;
 }
 
@@ -243,10 +240,6 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
 
   url = (char *)malloc(strlen(c->api_endpoint) + strlen(path) + 2);
   sprintf(url, "%s/%s", c->api_endpoint, path);
-
-  res->data        = NULL;
-  res->size        = 0;
-  res->status_code = (long)200;
 
   if (auth != NULL) {
     headers = curl_slist_append(headers, auth);
@@ -308,7 +301,7 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
   if (code >= 400) {
     syslog(LOG_ERR, "%s(stns)[L%d] http request failed: %s", __func__, __LINE__, curl_easy_strerror(result));
-    res->data        = NULL;
+    free(res->data);
     res->size        = 0;
     res->status_code = code;
     result           = CURLE_HTTP_RETURNED_ERROR;
@@ -452,7 +445,7 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
   CURLcode result;
   pthread_t pthread;
   int retry_count  = c->request_retry;
-  res->data        = NULL;
+  res->data        = (char *)malloc(sizeof(char));
   res->size        = 0;
   res->status_code = (long)200;
 
@@ -492,6 +485,7 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
       }
     }
   }
+
 request:
   if (!stns_request_available(STNS_LOCK_FILE, c))
     return CURLE_COULDNT_CONNECT;
