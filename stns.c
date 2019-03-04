@@ -148,7 +148,7 @@ void stns_unload_config(stns_conf_t *c)
   UNLOAD_TOML_BYKEY(tls_key);
 
   if (c->http_headers != NULL) {
-    int i, size = 0;
+    int i = 0;
     for (i = 0; i < c->http_headers->size; i++) {
       free(c->http_headers->headers[i].value);
       free(c->http_headers->headers[i].key);
