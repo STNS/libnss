@@ -144,9 +144,11 @@ extern void set_group_lowest_id(int);
                                                                                                                        \
     if (curl_result != CURLE_OK) {                                                                                     \
       if (r.status_code == STNS_HTTP_NOTFOUND) {                                                                       \
+        free(r.data);                                                                                                  \
         stns_unload_config(&c);                                                                                        \
         return NSS_STATUS_NOTFOUND;                                                                                    \
       }                                                                                                                \
+      free(r.data);                                                                                                    \
       stns_unload_config(&c);                                                                                          \
       return NSS_STATUS_UNAVAIL;                                                                                       \
     }                                                                                                                  \
@@ -202,6 +204,7 @@ extern void set_group_lowest_id(int);
     curl_result = stns_request(&c, #query, &r);                                                                        \
     if (curl_result != CURLE_OK) {                                                                                     \
       if (r.status_code == STNS_HTTP_NOTFOUND) {                                                                       \
+        free(r.data);                                                                                                  \
         stns_unload_config(&c);                                                                                        \
         return NSS_STATUS_NOTFOUND;                                                                                    \
       }                                                                                                                \
