@@ -40,9 +40,18 @@ depsdev: build_dir cache_dir ## Installing dependencies for development
 	cd $(BUILD); tar xf shunit2.tgz; cd ../
 	test -d /usr/include/shunit2 || mv $(BUILD)/shunit2-$(SHUNIT_VERSION)/ /usr/include/shunit2
 
+debug:
+	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Testing$(RESET)"
+	$(CC) -g \
+	  test/debug.c stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c \
+		-lcurl -lpthread -o $(BUILD)/debug && \
+		$(BUILD)/debug && valgrind --leak-check=full tmp/libs/debug
+
+
 testdev: ## Test without dependencies installation
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Testing$(RESET)"
-	$(CC) -g3 -O0 stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c stns_test.c stns_group_test.c stns_shadow_test.c stns_passwd_test.c \
+	$(CC) -g3 -fsanitize=address -O0 -fno-omit-frame-pointer \
+	  stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c stns_test.c stns_group_test.c stns_shadow_test.c stns_passwd_test.c \
 		-lcurl -lcriterion -lpthread -o $(BUILD)/test && \
 		$(BUILD)/test --verbose
 build: nss_build key_wrapper_build
