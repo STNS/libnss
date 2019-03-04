@@ -71,6 +71,7 @@ Test(stns_request, http_request)
   c.cache_dir       = "/var/cache/stns";
   c.cache           = 0;
   c.user            = NULL;
+  c.ssl_verify      = 0;
   c.password        = NULL;
   c.query_wrapper   = NULL;
   c.tls_cert        = NULL;
@@ -98,6 +99,7 @@ Test(stns_request, http_cache)
   c.cache_dir       = "/var/cache/stns";
   c.cache           = 1;
   c.cache_ttl       = 2;
+  c.ssl_verify      = 0;
   c.user            = NULL;
   c.password        = NULL;
   c.query_wrapper   = NULL;
@@ -156,6 +158,7 @@ Test(stns_request, http_request_with_header)
   c.query_wrapper = NULL;
   c.tls_cert      = NULL;
   c.tls_key       = NULL;
+  c.ssl_verify    = 0;
 
   c.http_headers                       = (stns_user_httpheaders_t *)malloc(sizeof(stns_user_httpheaders_t));
   stns_user_httpheader_t *http_headers = (stns_user_httpheader_t *)malloc(sizeof(stns_user_httpheader_t) * 2);

@@ -31,7 +31,7 @@ ID_QUERY_AVAILABLE(group, low, >)
     const int key##_len = strlen(c->key);                                                                              \
     if (key##_len > 0) {                                                                                               \
       if (c->key[key##_len - 1] == '/') {                                                                              \
-        c->key = strndup(c->key, key##_len - 1);                                                                       \
+        c->key[key##_len - 1] = '\0';                                                                                  \
       }                                                                                                                \
     }                                                                                                                  \
   }
@@ -144,6 +144,18 @@ void stns_unload_config(stns_conf_t *c)
   UNLOAD_TOML_BYKEY(query_wrapper);
   UNLOAD_TOML_BYKEY(chain_ssh_wrapper);
   UNLOAD_TOML_BYKEY(http_proxy);
+  UNLOAD_TOML_BYKEY(tls_cert);
+  UNLOAD_TOML_BYKEY(tls_key);
+
+  if (c->http_headers != NULL) {
+    int i, size = 0;
+    for (i = 0; i < c->http_headers->size; i++) {
+      free(c->http_headers->headers[i].value);
+      free(c->http_headers->headers[i].key);
+      free(c->http_headers->headers);
+    }
+  }
+  UNLOAD_TOML_BYKEY(http_headers);
 }
 
 static void trim(char *s)
