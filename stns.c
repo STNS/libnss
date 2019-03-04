@@ -105,11 +105,15 @@ void stns_load_config(char *filename, stns_conf_t *c)
     c->http_headers = (stns_user_httpheaders_t *)malloc(sizeof(stns_user_httpheaders_t));
 
     while (1) {
+      if (header_size > MAXBUF)
+        break;
+
       if (0 != (key = toml_key_in(in_tab, header_size)) && 0 != (raw = toml_raw_in(in_tab, key))) {
         if (header_size == 0)
-          http_headers = (stns_user_httpheader_t *)malloc(sizeof(stns_user_httpheader_t) * header_size);
+          http_headers = (stns_user_httpheader_t *)malloc(sizeof(stns_user_httpheader_t));
         else
-          http_headers = (stns_user_httpheader_t *)realloc(http_headers, sizeof(stns_user_httpheader_t) * header_size);
+          http_headers =
+              (stns_user_httpheader_t *)realloc(http_headers, sizeof(stns_user_httpheader_t) * (header_size + 1));
 
         if (0 != toml_rtos(raw, &http_headers[header_size].value)) {
           syslog(LOG_ERR, "%s(stns)[L%d] cannot parse toml file:%s key:%s", __func__, __LINE__, filename, key);
