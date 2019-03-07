@@ -1,6 +1,7 @@
 # The base of this code is https://github.com/pyama86/stns/blob/master/Makefile
 CC=gcc
-CFLAGS=-Wall -Wstrict-prototypes -Werror -fPIC -std=c99 -D_GNU_SOURCE
+CFLAGS=-Wall -Wstrict-prototypes -Werror -fPIC -std=c99 -D_GNU_SOURCE -I/usr/local/curl/include
+
 LIBRARY=libnss_stns.so.2.0
 KEY_WRAPPER=stns-key-wrapper
 LINKS=libnss_stns.so.2 libnss_stns.so
@@ -34,9 +35,9 @@ cache_dir: ## Create directory for cache
 	test -d $(CACHE) || mkdir -p $(CACHE)
 
 
-curl: 
+curl: build_dir
 	test -d $(BUILD)/curl-$(CURL_VERSION) || (curl -sL https://curl.haxx.se/download/curl-$(CURL_VERSION).tar.gz -o $(BUILD)/curl-$(CURL_VERSION).tar.gz && cd $(BUILD) && tar xf curl-$(CURL_VERSION).tar.gz)
-	test -f /usr/local/curl/lib/libcurl.a || (cd $(BUILD)/curl-$(CURL_VERSION) && ./configure \
+	test -f /usr/local/curl/lib/libcurl.a || (cd $(BUILD)/curl-$(CURL_VERSION) && LDFLAGS=-L/usr/lib/x86_64-linux-gnu ./configure \
 	  --with-ssl \
 	  --enable-libcurl-option \
 	  --disable-shared \
@@ -79,8 +80,8 @@ testdev: ## Test without dependencies installation
 	  stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c stns_test.c stns_group_test.c stns_shadow_test.c stns_passwd_test.c \
 		-lcurl -lcriterion -lpthread -o $(BUILD)/test && \
 		$(BUILD)/test --verbose
-build: curl nss_build key_wrapper_build
-nss_build: curl build_dir ## Build nss_stns
+build: nss_build key_wrapper_build
+nss_build: build_dir ## Build nss_stns
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Building nss_stns$(RESET)"
 	$(CC) $(CFLAGS) -c parson.c -o $(BUILD)/parson.o
 	$(CC) $(CFLAGS) -c toml.c -o $(BUILD)/toml.o
@@ -100,9 +101,10 @@ nss_build: curl build_dir ## Build nss_stns
 		-lssl \
 		-lcrypto \
 		-lz \
-		-ldl
+		-ldl \
+		-lrt
 
-key_wrapper_build: curl build_dir ## Build nss_stns
+key_wrapper_build: build_dir ## Build nss_stns
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Building nss_stns$(RESET)"
 	$(CC) $(CFLAGS) -c toml.c -o $(BUILD)/toml.o
 	$(CC) $(CFLAGS) -c parson.c -o $(BUILD)/parson.o
@@ -118,7 +120,8 @@ key_wrapper_build: curl build_dir ## Build nss_stns
 		-lssl \
 		-lcrypto \
 		-lz \
-		-ldl
+		-ldl \
+		-lrt
 
 integration: build install depsdev ## Run integration test
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Integration Testing$(RESET)"
@@ -160,7 +163,7 @@ source_for_rpm: ## Create source for RPM
 	cp tmp.$(DIST)/libnss-stns-v2-$(VERSION).tar.gz ./builds
 	rm -rf tmp.$(DIST)
 
-rpm: source_for_rpm ## Packaging for RPM
+rpm: source_for_rpm curl ## Packaging for RPM
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Packaging for RPM$(RESET)"
 	cp builds/libnss-stns-v2-$(VERSION).tar.gz /root/rpmbuild/SOURCES
 	spectool -g -R rpm/stns.spec
@@ -177,7 +180,7 @@ source_for_deb: ## Create source for DEB
 		xz -v libnss-stns-v2_$(VERSION).tar
 	mv tmp.$(DIST)/libnss-stns-v2_$(VERSION).tar.xz tmp.$(DIST)/libnss-stns-v2_$(VERSION).orig.tar.xz
 
-deb: source_for_deb ## Packaging for DEB
+deb: source_for_deb curl ## Packaging for DEB
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Packaging for DEB$(RESET)"
 	cd tmp.$(DIST) && \
 		tar xf libnss-stns-v2_$(VERSION).orig.tar.xz && \
