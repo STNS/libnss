@@ -123,7 +123,7 @@ key_wrapper_build: build_dir ## Build nss_stns
 		-ldl \
 		-lrt
 
-integration: build install depsdev ## Run integration test
+integration: curl build install depsdev ## Run integration test
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Integration Testing$(RESET)"
 	mkdir -p /etc/stns/client
 	mkdir -p /etc/stns/server
