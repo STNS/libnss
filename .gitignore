@@ -8,4 +8,3 @@ default.etcd
 .vagrant
 builds/*
 STNS
-test/debug.c

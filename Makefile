@@ -19,6 +19,7 @@ BUILD=tmp/libs
 CACHE=/var/cache/stns
 CRITERION_VERSION=2.3.2
 SHUNIT_VERSION=2.1.6
+CURL_VERSION=7.64.0
 SOURCES=Makefile stns.h stns.c stns*.c stns*.h toml.h toml.c parson.h parson.c stns.conf.example test
 DIST ?= unknown
 
@@ -31,6 +32,31 @@ build_dir: ## Create directory for build
 
 cache_dir: ## Create directory for cache
 	test -d $(CACHE) || mkdir -p $(CACHE)
+
+
+curl: 
+	test -d $(BUILD)/curl-$(CURL_VERSION) || (curl -sL https://curl.haxx.se/download/curl-$(CURL_VERSION).tar.gz -o $(BUILD)/curl-$(CURL_VERSION).tar.gz && cd $(BUILD) && tar xf curl-$(CURL_VERSION).tar.gz)
+	test -f /usr/local/curl/lib/libcurl.a || (cd $(BUILD)/curl-$(CURL_VERSION) && ./configure \
+	  --with-ssl \
+	  --enable-libcurl-option \
+	  --disable-shared \
+	  --enable-static \
+	  --prefix=/usr/local/curl \
+	  --disable-ldap \
+	  --disable-sspi \
+	  --without-librtmp \
+	  --disable-ftp \
+	  --disable-file \
+	  --disable-dict \
+	  --disable-telnet \
+	  --disable-tftp \
+	  --disable-rtsp \
+	  --disable-pop3 \
+	  --disable-imap \
+	  --disable-smtp \
+	  --disable-gopher \
+	  --disable-smb \
+	  --without-libidn && make && make install)
 
 depsdev: build_dir cache_dir ## Installing dependencies for development
 	test -f $(BUILD)/criterion.tar.bz2 || curl -sL https://github.com/Snaipe/Criterion/releases/download/v$(CRITERION_VERSION)/criterion-v$(CRITERION_VERSION)-linux-x86_64.tar.bz2 -o $(BUILD)/criterion.tar.bz2
@@ -47,15 +73,14 @@ debug:
 		-lcurl -lpthread -o $(BUILD)/debug && \
 		$(BUILD)/debug && valgrind --leak-check=full tmp/libs/debug
 
-
 testdev: ## Test without dependencies installation
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Testing$(RESET)"
 	$(CC) -g3 -fsanitize=address -O0 -fno-omit-frame-pointer \
 	  stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c stns_test.c stns_group_test.c stns_shadow_test.c stns_passwd_test.c \
 		-lcurl -lcriterion -lpthread -o $(BUILD)/test && \
 		$(BUILD)/test --verbose
-build: nss_build key_wrapper_build
-nss_build: build_dir ## Build nss_stns
+build: curl nss_build key_wrapper_build
+nss_build: curl build_dir ## Build nss_stns
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Building nss_stns$(RESET)"
 	$(CC) $(CFLAGS) -c parson.c -o $(BUILD)/parson.o
 	$(CC) $(CFLAGS) -c toml.c -o $(BUILD)/toml.o
@@ -70,8 +95,14 @@ nss_build: build_dir ## Build nss_stns
 		$(BUILD)/toml.o \
 		$(BUILD)/stns_group.o \
 		$(BUILD)/stns_shadow.o \
-		-lcurl -lpthread
-key_wrapper_build: build_dir ## Build nss_stns
+		/usr/local/curl/lib/libcurl.a \
+		-lpthread \
+		-lssl \
+		-lcrypto \
+		-lz \
+		-ldl
+
+key_wrapper_build: curl build_dir ## Build nss_stns
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Building nss_stns$(RESET)"
 	$(CC) $(CFLAGS) -c toml.c -o $(BUILD)/toml.o
 	$(CC) $(CFLAGS) -c parson.c -o $(BUILD)/parson.o
@@ -82,7 +113,12 @@ key_wrapper_build: build_dir ## Build nss_stns
 		$(BUILD)/stns_key_wrapper.o \
 		$(BUILD)/parson.o \
 		$(BUILD)/toml.o \
-		-lcurl -lpthread
+		/usr/local/curl/lib/libcurl.a \
+		-lpthread \
+		-lssl \
+		-lcrypto \
+		-lz \
+		-ldl
 
 integration: build install depsdev ## Run integration test
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Integration Testing$(RESET)"
