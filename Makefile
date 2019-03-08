@@ -78,15 +78,15 @@ testdev: ## Test without dependencies installation
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Testing$(RESET)"
 	$(CC) -g3 -fsanitize=address -O0 -fno-omit-frame-pointer -I/usr/local/curl/include \
 	  stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c stns_test.c stns_group_test.c stns_shadow_test.c stns_passwd_test.c \
-		-o $(BUILD)/test \
+		/usr/local/curl/lib/libcurl.a \
+		-lcriterion \
+		-lpthread \
+		-lssl \
+		-lcrypto \
 		-lz \
 		-ldl \
 		-lrt \
-		-lssl \
-		-lcrypto \
-		/usr/local/curl/lib/libcurl.a \
-		-lpthread \
-		-lcriterion
+		-o $(BUILD)/test
 		$(BUILD)/test --verbose
 build: nss_build key_wrapper_build
 nss_build: build_dir ## Build nss_stns
