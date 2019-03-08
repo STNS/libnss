@@ -25,7 +25,7 @@ SOURCES=Makefile stns.h stns.c stns*.c stns*.h toml.h toml.c parson.h parson.c s
 DIST ?= unknown
 
 default: build
-ci: depsdev test integration
+ci: curl depsdev test integration
 test: testdev ## Test with dependencies installation
 
 build_dir: ## Create directory for build
@@ -69,16 +69,24 @@ depsdev: build_dir cache_dir ## Installing dependencies for development
 
 debug:
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Testing$(RESET)"
-	$(CC) -g \
+	$(CC) -g -I/usr/local/curl/include \
 	  test/debug.c stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c \
 		-lcurl -lpthread -o $(BUILD)/debug && \
 		$(BUILD)/debug && valgrind --leak-check=full tmp/libs/debug
 
 testdev: ## Test without dependencies installation
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Testing$(RESET)"
-	$(CC) -g3 -fsanitize=address -O0 -fno-omit-frame-pointer \
+	$(CC) -g3 -fsanitize=address -O0 -fno-omit-frame-pointer -I/usr/local/curl/include \
 	  stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c stns_test.c stns_group_test.c stns_shadow_test.c stns_passwd_test.c \
-		-lcurl -lcriterion -lpthread -o $(BUILD)/test && \
+		-o $(BUILD)/test \
+		-lz \
+		-ldl \
+		-lrt \
+		-lssl \
+		-lcrypto \
+		/usr/local/curl/lib/libcurl.a \
+		-lpthread \
+		-lcriterion
 		$(BUILD)/test --verbose
 build: nss_build key_wrapper_build
 nss_build: build_dir ## Build nss_stns
