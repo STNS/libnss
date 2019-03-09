@@ -8,11 +8,11 @@ Source:           %{name}-%{version}.tar.gz
 Group:            System Environment/Base
 Packager:         pyama86 <www.kazu.com@gmail.com>
 %if 0%{?rhel} < 6
-Requires:         glibc curl
-BuildRequires:    gcc make curl-devel
+Requires:         glibc openssl-devel
+BuildRequires:    gcc make
 %else
-Requires:         glibc libcurl
-BuildRequires:    gcc make libcurl-devel
+Requires:         glibc openssl-devel
+BuildRequires:    gcc make
 %endif
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:        i386, x86_64

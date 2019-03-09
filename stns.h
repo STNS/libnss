@@ -98,7 +98,6 @@ extern void set_group_lowest_id(int);
                                                                                                                        \
     if (root == NULL) {                                                                                                \
       syslog(LOG_ERR, "%s(stns)[L%d] json parse error", __func__, __LINE__);                                           \
-      free(data);                                                                                                      \
       return NSS_STATUS_UNAVAIL;                                                                                       \
     }                                                                                                                  \
     JSON_Array *root_array = json_value_get_array(root);                                                               \
@@ -143,6 +142,8 @@ extern void set_group_lowest_id(int);
     curl_result = stns_request(&c, url, &r);                                                                           \
                                                                                                                        \
     if (curl_result != CURLE_OK) {                                                                                     \
+      free(r.data);                                                                                                    \
+      stns_unload_config(&c);                                                                                          \
       if (r.status_code == STNS_HTTP_NOTFOUND) {                                                                       \
         return NSS_STATUS_NOTFOUND;                                                                                    \
       }                                                                                                                \
@@ -178,7 +179,6 @@ extern void set_group_lowest_id(int);
     entry_idx        = 0;                                                                                              \
     JSON_Value *root = json_parse_string(data);                                                                        \
     if (root == NULL) {                                                                                                \
-      free(data);                                                                                                      \
       pthread_mutex_unlock(&type##ent_mutex);                                                                          \
       syslog(LOG_ERR, "%s(stns)[L%d] json parse error", __func__, __LINE__);                                           \
       return NSS_STATUS_UNAVAIL;                                                                                       \
@@ -199,6 +199,8 @@ extern void set_group_lowest_id(int);
                                                                                                                        \
     curl_result = stns_request(&c, #query, &r);                                                                        \
     if (curl_result != CURLE_OK) {                                                                                     \
+      free(r.data);                                                                                                    \
+      stns_unload_config(&c);                                                                                          \
       if (r.status_code == STNS_HTTP_NOTFOUND) {                                                                       \
         return NSS_STATUS_NOTFOUND;                                                                                    \
       }                                                                                                                \
@@ -253,8 +255,10 @@ extern void set_group_lowest_id(int);
   {                                                                                                                    \
     stns_conf_t c;                                                                                                     \
     stns_load_config(STNS_CONFIG_FILE, &c);                                                                            \
-    if (pthread_mutex_retrylock(&type##ent_mutex) != 0)                                                                \
+    if (pthread_mutex_retrylock(&type##ent_mutex) != 0) {                                                              \
+      stns_unload_config(&c);                                                                                          \
       return NSS_STATUS_UNAVAIL;                                                                                       \
+    }                                                                                                                  \
     int result = inner_nss_stns_get##type##ent_r(&c, rbuf, buf, buflen, errnop);                                       \
     pthread_mutex_unlock(&type##ent_mutex);                                                                            \
     stns_unload_config(&c);                                                                                            \

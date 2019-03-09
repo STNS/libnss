@@ -31,7 +31,7 @@ ID_QUERY_AVAILABLE(group, low, >)
     const int key##_len = strlen(c->key);                                                                              \
     if (key##_len > 0) {                                                                                               \
       if (c->key[key##_len - 1] == '/') {                                                                              \
-        c->key = strndup(c->key, key##_len - 1);                                                                       \
+        c->key[key##_len - 1] = '\0';                                                                                  \
       }                                                                                                                \
     }                                                                                                                  \
   }
@@ -105,11 +105,15 @@ void stns_load_config(char *filename, stns_conf_t *c)
     c->http_headers = (stns_user_httpheaders_t *)malloc(sizeof(stns_user_httpheaders_t));
 
     while (1) {
+      if (header_size > MAXBUF)
+        break;
+
       if (0 != (key = toml_key_in(in_tab, header_size)) && 0 != (raw = toml_raw_in(in_tab, key))) {
         if (header_size == 0)
-          http_headers = (stns_user_httpheader_t *)malloc(sizeof(stns_user_httpheader_t) * header_size);
+          http_headers = (stns_user_httpheader_t *)malloc(sizeof(stns_user_httpheader_t));
         else
-          http_headers = (stns_user_httpheader_t *)realloc(http_headers, sizeof(stns_user_httpheader_t) * header_size);
+          http_headers =
+              (stns_user_httpheader_t *)realloc(http_headers, sizeof(stns_user_httpheader_t) * (header_size + 1));
 
         if (0 != toml_rtos(raw, &http_headers[header_size].value)) {
           syslog(LOG_ERR, "%s(stns)[L%d] cannot parse toml file:%s key:%s", __func__, __LINE__, filename, key);
@@ -140,6 +144,18 @@ void stns_unload_config(stns_conf_t *c)
   UNLOAD_TOML_BYKEY(query_wrapper);
   UNLOAD_TOML_BYKEY(chain_ssh_wrapper);
   UNLOAD_TOML_BYKEY(http_proxy);
+  UNLOAD_TOML_BYKEY(tls_cert);
+  UNLOAD_TOML_BYKEY(tls_key);
+
+  if (c->http_headers != NULL) {
+    int i = 0;
+    for (i = 0; i < c->http_headers->size; i++) {
+      free(c->http_headers->headers[i].value);
+      free(c->http_headers->headers[i].key);
+      free(c->http_headers->headers);
+    }
+  }
+  UNLOAD_TOML_BYKEY(http_headers);
 }
 
 static void trim(char *s)
@@ -195,16 +211,13 @@ static size_t response_callback(void *buffer, size_t size, size_t nmemb, void *u
     return 0;
   }
 
-  if (!res->data) {
-    res->data = (char *)malloc(segsize + 1);
-  } else {
-    res->data = (char *)realloc(res->data, res->size + segsize + 1);
+  res->data = (char *)realloc(res->data, res->size + segsize + 1);
+
+  if (res->data) {
+    memcpy(&(res->data[res->size]), buffer, segsize);
+    res->size += segsize;
+    res->data[res->size] = 0;
   }
-
-  memcpy(&(res->data[res->size]), buffer, segsize);
-  res->size += segsize;
-  res->data[res->size] = 0;
-
   return segsize;
 }
 
@@ -228,10 +241,6 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
   url = (char *)malloc(strlen(c->api_endpoint) + strlen(path) + 2);
   sprintf(url, "%s/%s", c->api_endpoint, path);
 
-  res->data        = NULL;
-  res->size        = 0;
-  res->status_code = (long)200;
-
   if (auth != NULL) {
     headers = curl_slist_append(headers, auth);
   }
@@ -240,7 +249,7 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
 
     int i, size = 0;
     for (i = 0; i < c->http_headers->size; i++) {
-      size += strlen(c->http_headers->headers[i].key) + strlen(c->http_headers->headers[i].key) + 3;
+      size += strlen(c->http_headers->headers[i].key) + strlen(c->http_headers->headers[i].value) + 3;
       if (in_headers == NULL)
         in_headers = (char *)malloc(size);
       else
@@ -292,10 +301,10 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
   if (code >= 400) {
     syslog(LOG_ERR, "%s(stns)[L%d] http request failed: %s", __func__, __LINE__, curl_easy_strerror(result));
-    res->data = NULL;
-    res->size = 0;
+    res->data        = NULL;
+    res->size        = 0;
     res->status_code = code;
-    result = CURLE_HTTP_RETURNED_ERROR;
+    result           = CURLE_HTTP_RETURNED_ERROR;
   }
 
   free(auth);
@@ -436,7 +445,7 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
   CURLcode result;
   pthread_t pthread;
   int retry_count  = c->request_retry;
-  res->data        = NULL;
+  res->data        = (char *)malloc(sizeof(char));
   res->size        = 0;
   res->status_code = (long)200;
 
@@ -476,6 +485,7 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
       }
     }
   }
+
 request:
   if (!stns_request_available(STNS_LOCK_FILE, c))
     return CURLE_COULDNT_CONNECT;

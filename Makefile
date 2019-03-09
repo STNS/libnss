@@ -1,6 +1,7 @@
 # The base of this code is https://github.com/pyama86/stns/blob/master/Makefile
 CC=gcc
-CFLAGS=-Wall -Wstrict-prototypes -Werror -fPIC -std=c99 -D_GNU_SOURCE
+CFLAGS=-Wall -Wstrict-prototypes -Werror -fPIC -std=c99 -D_GNU_SOURCE -I/usr/local/curl/include
+
 LIBRARY=libnss_stns.so.2.0
 KEY_WRAPPER=stns-key-wrapper
 LINKS=libnss_stns.so.2 libnss_stns.so
@@ -19,11 +20,12 @@ BUILD=tmp/libs
 CACHE=/var/cache/stns
 CRITERION_VERSION=2.3.2
 SHUNIT_VERSION=2.1.6
+CURL_VERSION=7.64.0
 SOURCES=Makefile stns.h stns.c stns*.c stns*.h toml.h toml.c parson.h parson.c stns.conf.example test
 DIST ?= unknown
 
 default: build
-ci: depsdev test integration
+ci: curl depsdev test integration
 test: testdev ## Test with dependencies installation
 
 build_dir: ## Create directory for build
@@ -31,6 +33,31 @@ build_dir: ## Create directory for build
 
 cache_dir: ## Create directory for cache
 	test -d $(CACHE) || mkdir -p $(CACHE)
+
+
+curl: build_dir
+	test -d $(BUILD)/curl-$(CURL_VERSION) || (curl -sL https://curl.haxx.se/download/curl-$(CURL_VERSION).tar.gz -o $(BUILD)/curl-$(CURL_VERSION).tar.gz && cd $(BUILD) && tar xf curl-$(CURL_VERSION).tar.gz)
+	test -f /usr/local/curl/lib/libcurl.a || (cd $(BUILD)/curl-$(CURL_VERSION) && LDFLAGS=-L/usr/lib/x86_64-linux-gnu ./configure \
+	  --with-ssl \
+	  --enable-libcurl-option \
+	  --disable-shared \
+	  --enable-static \
+	  --prefix=/usr/local/curl \
+	  --disable-ldap \
+	  --disable-sspi \
+	  --without-librtmp \
+	  --disable-ftp \
+	  --disable-file \
+	  --disable-dict \
+	  --disable-telnet \
+	  --disable-tftp \
+	  --disable-rtsp \
+	  --disable-pop3 \
+	  --disable-imap \
+	  --disable-smtp \
+	  --disable-gopher \
+	  --disable-smb \
+	  --without-libidn && make && make install)
 
 depsdev: build_dir cache_dir ## Installing dependencies for development
 	test -f $(BUILD)/criterion.tar.bz2 || curl -sL https://github.com/Snaipe/Criterion/releases/download/v$(CRITERION_VERSION)/criterion-v$(CRITERION_VERSION)-linux-x86_64.tar.bz2 -o $(BUILD)/criterion.tar.bz2
@@ -40,10 +67,26 @@ depsdev: build_dir cache_dir ## Installing dependencies for development
 	cd $(BUILD); tar xf shunit2.tgz; cd ../
 	test -d /usr/include/shunit2 || mv $(BUILD)/shunit2-$(SHUNIT_VERSION)/ /usr/include/shunit2
 
+debug:
+	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Testing$(RESET)"
+	$(CC) -g -I/usr/local/curl/include \
+	  test/debug.c stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c \
+		-lcurl -lpthread -o $(BUILD)/debug && \
+		$(BUILD)/debug && valgrind --leak-check=full tmp/libs/debug
+
 testdev: ## Test without dependencies installation
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Testing$(RESET)"
-	$(CC) -g3 -O0 stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c stns_test.c stns_group_test.c stns_shadow_test.c stns_passwd_test.c \
-		-lcurl -lcriterion -lpthread -o $(BUILD)/test && \
+	$(CC) -g3 -fsanitize=address -O0 -fno-omit-frame-pointer -I/usr/local/curl/include \
+	  stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c stns_test.c stns_group_test.c stns_shadow_test.c stns_passwd_test.c \
+		/usr/local/curl/lib/libcurl.a \
+		-lcriterion \
+		-lpthread \
+		-lssl \
+		-lcrypto \
+		-lz \
+		-ldl \
+		-lrt \
+		-o $(BUILD)/test
 		$(BUILD)/test --verbose
 build: nss_build key_wrapper_build
 nss_build: build_dir ## Build nss_stns
@@ -61,7 +104,14 @@ nss_build: build_dir ## Build nss_stns
 		$(BUILD)/toml.o \
 		$(BUILD)/stns_group.o \
 		$(BUILD)/stns_shadow.o \
-		-lcurl -lpthread
+		/usr/local/curl/lib/libcurl.a \
+		-lpthread \
+		-lssl \
+		-lcrypto \
+		-lz \
+		-ldl \
+		-lrt
+
 key_wrapper_build: build_dir ## Build nss_stns
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Building nss_stns$(RESET)"
 	$(CC) $(CFLAGS) -c toml.c -o $(BUILD)/toml.o
@@ -73,9 +123,15 @@ key_wrapper_build: build_dir ## Build nss_stns
 		$(BUILD)/stns_key_wrapper.o \
 		$(BUILD)/parson.o \
 		$(BUILD)/toml.o \
-		-lcurl -lpthread
+		/usr/local/curl/lib/libcurl.a \
+		-lpthread \
+		-lssl \
+		-lcrypto \
+		-lz \
+		-ldl \
+		-lrt
 
-integration: build install depsdev ## Run integration test
+integration: curl build install depsdev ## Run integration test
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Integration Testing$(RESET)"
 	mkdir -p /etc/stns/client
 	mkdir -p /etc/stns/server
@@ -115,7 +171,7 @@ source_for_rpm: ## Create source for RPM
 	cp tmp.$(DIST)/libnss-stns-v2-$(VERSION).tar.gz ./builds
 	rm -rf tmp.$(DIST)
 
-rpm: source_for_rpm ## Packaging for RPM
+rpm: source_for_rpm curl ## Packaging for RPM
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Packaging for RPM$(RESET)"
 	cp builds/libnss-stns-v2-$(VERSION).tar.gz /root/rpmbuild/SOURCES
 	spectool -g -R rpm/stns.spec
@@ -132,7 +188,7 @@ source_for_deb: ## Create source for DEB
 		xz -v libnss-stns-v2_$(VERSION).tar
 	mv tmp.$(DIST)/libnss-stns-v2_$(VERSION).tar.xz tmp.$(DIST)/libnss-stns-v2_$(VERSION).orig.tar.xz
 
-deb: source_for_deb ## Packaging for DEB
+deb: source_for_deb curl ## Packaging for DEB
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Packaging for DEB$(RESET)"
 	cd tmp.$(DIST) && \
 		tar xf libnss-stns-v2_$(VERSION).orig.tar.xz && \
