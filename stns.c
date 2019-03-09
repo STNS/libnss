@@ -54,7 +54,7 @@ static void stns_force_create_cache_dir(stns_conf_t *c)
   }
 }
 
-void stns_load_config(char *filename, stns_conf_t *c)
+int stns_load_config(char *filename, stns_conf_t *c)
 {
   char errbuf[200];
   const char *raw, *key;
@@ -63,15 +63,14 @@ void stns_load_config(char *filename, stns_conf_t *c)
   FILE *fp = fopen(filename, "r");
   if (!fp) {
     syslog(LOG_ERR, "%s(stns)[L%d] cannot open %s: %s", __func__, __LINE__, filename, strerror(errno));
-
-    exit(1);
+    return 1;
   }
 
   toml_table_t *tab = toml_parse_file(fp, errbuf, sizeof(errbuf));
 
   if (!tab) {
     syslog(LOG_ERR, "%s(stns)[L%d] %s", __func__, __LINE__, errbuf);
-    exit(1);
+    return 1;
   }
 
   GET_TOML_BYKEY(api_endpoint, toml_rtos, "http://localhost:1104/v1", TOML_STR);
@@ -132,6 +131,7 @@ void stns_load_config(char *filename, stns_conf_t *c)
   stns_force_create_cache_dir(c);
   fclose(fp);
   toml_free(tab);
+  return 0;
 }
 
 void stns_unload_config(stns_conf_t *c)

@@ -31,9 +31,12 @@ int main(int argc, char *argv[])
   }
 
   if (conf_path == NULL)
-    stns_load_config(STNS_CONFIG_FILE, &c);
+    ret = stns_load_config(STNS_CONFIG_FILE, &c);
   else
-    stns_load_config(conf_path, &c);
+    ret = stns_load_config(conf_path, &c);
+
+  if (ret != 0)
+    return -1;
 
   sprintf(url, "users?name=%s", argv[optind]);
   curl_result = stns_request(&c, url, &r);

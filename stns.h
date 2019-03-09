@@ -72,7 +72,7 @@ struct stns_conf_t {
   int negative_cache_ttl;
 };
 
-extern void stns_load_config(char *, stns_conf_t *);
+extern int stns_load_config(char *, stns_conf_t *);
 extern void stns_unload_config(stns_conf_t *);
 extern int stns_request(stns_conf_t *, char *, stns_response_t *);
 extern int stns_request_available(char *, stns_conf_t *);
@@ -136,7 +136,8 @@ extern void set_group_lowest_id(int);
     stns_conf_t c;                                                                                                     \
     char url[MAXBUF];                                                                                                  \
                                                                                                                        \
-    stns_load_config(STNS_CONFIG_FILE, &c);                                                                            \
+    if (stns_load_config(STNS_CONFIG_FILE, &c) != 0)                                                                   \
+      return NSS_STATUS_UNAVAIL;                                                                                       \
     query_available;                                                                                                   \
     sprintf(url, format, value id_shift);                                                                              \
     curl_result = stns_request(&c, url, &r);                                                                           \
@@ -195,7 +196,8 @@ extern void set_group_lowest_id(int);
     int curl_result;                                                                                                   \
     stns_response_t r;                                                                                                 \
     stns_conf_t c;                                                                                                     \
-    stns_load_config(STNS_CONFIG_FILE, &c);                                                                            \
+    if (stns_load_config(STNS_CONFIG_FILE, &c) != 0)                                                                   \
+      return NSS_STATUS_UNAVAIL;                                                                                       \
                                                                                                                        \
     curl_result = stns_request(&c, #query, &r);                                                                        \
     if (curl_result != CURLE_OK) {                                                                                     \
@@ -254,7 +256,8 @@ extern void set_group_lowest_id(int);
   enum nss_status _nss_stns_get##type##ent_r(struct resource *rbuf, char *buf, size_t buflen, int *errnop)             \
   {                                                                                                                    \
     stns_conf_t c;                                                                                                     \
-    stns_load_config(STNS_CONFIG_FILE, &c);                                                                            \
+    if (stns_load_config(STNS_CONFIG_FILE, &c) != 0)                                                                   \
+      return NSS_STATUS_UNAVAIL;                                                                                       \
     if (pthread_mutex_retrylock(&type##ent_mutex) != 0) {                                                              \
       stns_unload_config(&c);                                                                                          \
       return NSS_STATUS_UNAVAIL;                                                                                       \
