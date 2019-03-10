@@ -299,7 +299,7 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
 
   long code;
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
-  if (code >= 400) {
+  if (code >= 400 || code == 0) {
     syslog(LOG_ERR, "%s(stns)[L%d] http request failed: %s", __func__, __LINE__, curl_easy_strerror(result));
     res->data        = NULL;
     res->size        = 0;

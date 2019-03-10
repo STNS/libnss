@@ -34,7 +34,7 @@ build_dir: ## Create directory for build
 cache_dir: ## Create directory for cache
 	test -d $(CACHE) || mkdir -p $(CACHE)
 
-
+local_build: curl build
 curl: build_dir
 	test -d $(BUILD)/curl-$(CURL_VERSION) || (curl -sL https://curl.haxx.se/download/curl-$(CURL_VERSION).tar.gz -o $(BUILD)/curl-$(CURL_VERSION).tar.gz && cd $(BUILD) && tar xf curl-$(CURL_VERSION).tar.gz)
 	test -f /usr/local/curl/lib/libcurl.a || (cd $(BUILD)/curl-$(CURL_VERSION) && LDFLAGS=-L/usr/lib/x86_64-linux-gnu ./configure \
