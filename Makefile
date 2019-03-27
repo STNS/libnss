@@ -203,7 +203,9 @@ deb: source_for_deb curl ## Packaging for DEB
 	rm -rf tmp.$(DIST)
 pkg: ## Create some distribution packages
 	rm -rf builds && mkdir builds
-	docker-compose up $(DISTS)
+	docker-compose run --rm nss_centos6
+	docker-compose run --rm nss_centos7
+	docker-compose run --rm nss_ubuntu16
 
 changelog:
 	git-chglog -o CHANGELOG.md
