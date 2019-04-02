@@ -1,18 +1,18 @@
 Summary:          SimpleTomlNameService Nss Module
 Name:             libnss-stns-v2
 Version:          2.3.1
-Release:          1
+Release:          2
 License:          GPLv3
 URL:              https://github.com/STNS/STNS
 Source:           %{name}-%{version}.tar.gz
 Group:            System Environment/Base
 Packager:         pyama86 <www.kazu.com@gmail.com>
 %if 0%{?rhel} < 6
-Requires:         glibc openssl-devel
-BuildRequires:    gcc make
+Requires:         glibc openssl
+BuildRequires:    gcc make openssl-devel
 %else
-Requires:         glibc openssl-devel
-BuildRequires:    gcc make
+Requires:         glibc openssl
+BuildRequires:    gcc make openssl-devel
 %endif
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:        i386, x86_64
