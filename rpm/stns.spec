@@ -7,11 +7,11 @@ URL:              https://github.com/STNS/STNS
 Source:           %{name}-%{version}.tar.gz
 Group:            System Environment/Base
 Packager:         pyama86 <www.kazu.com@gmail.com>
-%if 0%{?rhel} < 6
+%if 0%{?rhel} < 7
 Requires:         glibc openssl
 BuildRequires:    gcc make openssl-devel
 %else
-Requires:         glibc openssl
+Requires:         glibc openssl-libs
 BuildRequires:    gcc make openssl-devel
 %endif
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
