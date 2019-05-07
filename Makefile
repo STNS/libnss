@@ -199,6 +199,7 @@ deb: source_for_deb curl ## Packaging for DEB
 		sed -i -e 's/xenial/$(DIST)/g' debian/changelog && \
 		debuild -uc -us
 	cd tmp.$(DIST) && \
+		find . -name "*.deb" | sed -e 's/\(\(.*libnss-stns-v2.*\).deb\)/mv \1 \2.$(DIST).deb/g' | sh && \
 		cp *.deb /stns/builds
 	rm -rf tmp.$(DIST)
 pkg: ## Create some distribution packages
@@ -206,6 +207,8 @@ pkg: ## Create some distribution packages
 	docker-compose run --rm -v `pwd`:/stns nss_centos6
 	docker-compose run --rm -v `pwd`:/stns nss_centos7
 	docker-compose run --rm -v `pwd`:/stns nss_ubuntu16
+	docker-compose run --rm -v `pwd`:/stns nss_debian8
+	docker-compose run --rm -v `pwd`:/stns nss_debian9
 
 changelog:
 	git-chglog -o CHANGELOG.md
