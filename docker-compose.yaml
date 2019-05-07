@@ -27,3 +27,21 @@ services:
     environment:
       DIST: xenial
     command: make deb
+  nss_debian8:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.debian-8
+    volumes:
+      - .:/stns
+    environment:
+      DIST: jessie
+    command: make deb
+  nss_debian9:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.debian-9
+    volumes:
+      - .:/stns
+    environment:
+      DIST: stretch
+    command: make deb
