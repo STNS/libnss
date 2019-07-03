@@ -58,6 +58,8 @@ install -m 644 stns.conf.example %{buildroot}%{_sysconfdir}/stns/client/stns.con
 %config(noreplace) /etc/stns/client/stns.conf
 
 %changelog
+* Wed Jul 3 2019 pyama86 <www.kazu.com@gmail.com> - 2.3.2-1
+- #20 restart systemd-logind when install
 * Sun Mar 10 2019 pyama86 <www.kazu.com@gmail.com> - 2.3.1-1
 - #14 unsupport porotcol is return code zero
 * Sat Mar 9 2019 pyama86 <www.kazu.com@gmail.com> - 2.3.0-1
