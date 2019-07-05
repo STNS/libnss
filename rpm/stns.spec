@@ -1,7 +1,7 @@
 Summary:          SimpleTomlNameService Nss Module
 Name:             libnss-stns-v2
-Version:          2.3.2
-Release:          2
+Version:          2.3.3
+Release:          1
 License:          GPLv3
 URL:              https://github.com/STNS/STNS
 Source:           %{name}-%{version}.tar.gz
@@ -60,6 +60,8 @@ systemctl status systemd-logind && systemctl daemon-reload && systemctl restart 
 %config(noreplace) /etc/stns/client/stns.conf
 
 %changelog
+* Fri Jul 5 2019 pyama86 <www.kazu.com@gmail.com> - 2.3.3-1
+- #21 Need daemon-reload after rewriting service file
 * Wed Jul 3 2019 pyama86 <www.kazu.com@gmail.com> - 2.3.2-1
 - #20 restart systemd-logind when install
 * Sun Mar 10 2019 pyama86 <www.kazu.com@gmail.com> - 2.3.1-1

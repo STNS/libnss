@@ -1,3 +1,9 @@
+libnss-stns-v2 (2.3.3-1) xenial; urgency=medium
+
+  * #21 Need daemon-reload after rewriting service file
+
+ -- pyama86 <www.kazu.com@gmail.com>  Fri, 5 Jul 2019 11:00:00 +0900
+
 libnss-stns-v2 (2.3.2-1) xenial; urgency=medium
 
   * #20 restart systemd-logind when install
