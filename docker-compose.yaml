@@ -18,6 +18,15 @@ services:
     environment:
       DIST: el6
     command: make rpm
+  nss_ubuntu14:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.ubuntu-14
+    volumes:
+      - .:/stns
+    environment:
+      DIST: trusty
+    command: make deb
   nss_ubuntu16:
     build:
       context: .
