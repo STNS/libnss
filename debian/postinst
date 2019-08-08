@@ -23,7 +23,7 @@ systemctl status systemd-logind --no-pager && systemctl daemon-reload && systemc
 case "$1" in
     configure)
         mkdir -p /var/cache/stns
-        chmod 777 /var/cache/stns
+        chmod 1777 /var/cache/stns
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
