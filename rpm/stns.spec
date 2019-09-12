@@ -1,7 +1,7 @@
 Summary:          SimpleTomlNameService Nss Module
 Name:             libnss-stns-v2
-Version:          2.3.3
-Release:          2
+Version:          2.4.0
+Release:          1
 License:          GPLv3
 URL:              https://github.com/STNS/STNS
 Source:           %{name}-%{version}.tar.gz
@@ -60,6 +60,10 @@ systemctl status systemd-logind --no-pager && systemctl daemon-reload && systemc
 %config(noreplace) /etc/stns/client/stns.conf
 
 %changelog
+* Thu Sep 12 2019 pyama86 <www.kazu.com@gmail.com> - 2.4.0-1
+- #23 cache dir with sticky bit(@tnmt)
+- #26 we don't need errors when http returnc code is 404
+- #27 supprt tls ca filepath
 * Thu Jul 11 2019 pyama86 <www.kazu.com@gmail.com> - 2.3.3-2
 - #22 Add --no-pager(@k1low)
 * Fri Jul 5 2019 pyama86 <www.kazu.com@gmail.com> - 2.3.3-1
