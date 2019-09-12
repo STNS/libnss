@@ -60,6 +60,7 @@ struct stns_conf_t {
   char *cache_dir;
   char *tls_cert;
   char *tls_key;
+  char *tls_ca;
   stns_user_httpheaders_t *http_headers;
   int uid_shift;
   int gid_shift;
