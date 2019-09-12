@@ -14,6 +14,7 @@ stns_conf_t test_conf()
   c.query_wrapper   = NULL;
   c.tls_cert        = NULL;
   c.tls_key         = NULL;
+  c.tls_ca          = NULL;
   c.http_headers    = NULL;
   c.request_timeout = 3;
   c.request_retry   = 3;
@@ -75,6 +76,7 @@ Test(stns_load_config, load_ok)
   cr_assert_eq(c.negative_cache_ttl, 10);
   cr_assert_str_eq(c.tls_cert, "example_cert");
   cr_assert_str_eq(c.tls_key, "example_key");
+  cr_assert_str_eq(c.tls_ca, "ca_cert");
   cr_assert_eq(c.http_headers->size, 1);
   cr_assert_str_eq(c.http_headers->headers[0].key, "X-API-TOKEN");
   cr_assert_str_eq(c.http_headers->headers[0].value, "token");

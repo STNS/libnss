@@ -83,6 +83,7 @@ int stns_load_config(char *filename, stns_conf_t *c)
   GET_TOML_BYKEY(http_proxy, toml_rtos, NULL, TOML_NULL_OR_INT);
   GET_TOML_BY_TABLE_KEY(tls, key, toml_rtos, NULL, TOML_NULL_OR_INT);
   GET_TOML_BY_TABLE_KEY(tls, cert, toml_rtos, NULL, TOML_NULL_OR_INT);
+  GET_TOML_BY_TABLE_KEY(tls, ca, toml_rtos, NULL, TOML_NULL_OR_INT);
 
   GET_TOML_BYKEY(uid_shift, toml_rtoi, 0, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(gid_shift, toml_rtoi, 0, TOML_NULL_OR_INT);
@@ -146,6 +147,7 @@ void stns_unload_config(stns_conf_t *c)
   UNLOAD_TOML_BYKEY(http_proxy);
   UNLOAD_TOML_BYKEY(tls_cert);
   UNLOAD_TOML_BYKEY(tls_key);
+  UNLOAD_TOML_BYKEY(tls_ca);
 
   if (c->http_headers != NULL) {
     int i = 0;
@@ -281,6 +283,10 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
   if (c->tls_cert != NULL && c->tls_key != NULL) {
     curl_easy_setopt(curl, CURLOPT_SSLCERT, c->tls_cert);
     curl_easy_setopt(curl, CURLOPT_SSLKEY, c->tls_key);
+  }
+
+  if (c->tls_ca != NULL) {
+    curl_easy_setopt(curl, CURLOPT_ISSUERCERT, c->tls_ca);
   }
 
   if (c->user != NULL) {
