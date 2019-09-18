@@ -286,7 +286,7 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
   }
 
   if (c->tls_ca != NULL) {
-    curl_easy_setopt(curl, CURLOPT_ISSUERCERT, c->tls_ca);
+    curl_easy_setopt(curl, CURLOPT_CAINFO, c->tls_ca);
   }
 
   if (c->user != NULL) {
