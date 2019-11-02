@@ -15,6 +15,7 @@ Please give me a pull request anything!
 #### Client
 ```
 $ make docker
+# make curl
 # make depsdev
 # make test
 ```
