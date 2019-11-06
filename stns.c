@@ -60,6 +60,9 @@ int stns_load_config(char *filename, stns_conf_t *c)
   const char *raw, *key;
   toml_table_t *in_tab;
 
+#ifdef DEBUG
+  syslog(LOG_ERR, "%s(stns)[L%d] start load config", __func__, __LINE__);
+#endif
   FILE *fp = fopen(filename, "r");
   if (!fp) {
     syslog(LOG_ERR, "%s(stns)[L%d] cannot open %s: %s", __func__, __LINE__, filename, strerror(errno));
@@ -102,7 +105,13 @@ int stns_load_config(char *filename, stns_conf_t *c)
   stns_user_httpheader_t *http_headers = NULL;
 
   if (0 != (in_tab = toml_table_in(tab, "http_headers"))) {
+#ifdef DEBUG
+    syslog(LOG_ERR, "%s(stns)[L%d] before malloc", __func__, __LINE__);
+#endif
     c->http_headers = (stns_user_httpheaders_t *)malloc(sizeof(stns_user_httpheaders_t));
+#ifdef DEBUG
+    syslog(LOG_ERR, "%s(stns)[L%d] after malloc", __func__, __LINE__);
+#endif
 
     while (1) {
       if (header_size > MAXBUF)
@@ -131,7 +140,13 @@ int stns_load_config(char *filename, stns_conf_t *c)
   }
   stns_force_create_cache_dir(c);
   fclose(fp);
+#ifdef DEBUG
+  syslog(LOG_ERR, "%s(stns)[L%d] before free", __func__, __LINE__);
+#endif
   toml_free(tab);
+#ifdef DEBUG
+  syslog(LOG_ERR, "%s(stns)[L%d] after free", __func__, __LINE__);
+#endif
   return 0;
 }
 
@@ -151,11 +166,17 @@ void stns_unload_config(stns_conf_t *c)
 
   if (c->http_headers != NULL) {
     int i = 0;
+#ifdef DEBUG
+    syslog(LOG_ERR, "%s(stns)[L%d] before free", __func__, __LINE__);
+#endif
     for (i = 0; i < c->http_headers->size; i++) {
       free(c->http_headers->headers[i].value);
       free(c->http_headers->headers[i].key);
       free(c->http_headers->headers);
     }
+#ifdef DEBUG
+    syslog(LOG_ERR, "%s(stns)[L%d] after free", __func__, __LINE__);
+#endif
   }
   UNLOAD_TOML_BYKEY(http_headers);
 }
@@ -263,10 +284,12 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
   }
 
 #ifdef DEBUG
-  syslog(LOG_DEBUG, "%s(stns)[L%d] send http request: %s", __func__, __LINE__, url);
+  syslog(LOG_ERR, "%s(stns)[L%d] send http request: %s", __func__, __LINE__, url);
 #endif
-
   curl = curl_easy_init();
+#ifdef DEBUG
+  syslog(LOG_ERR, "%s(stns)[L%d] init http request: %s", __func__, __LINE__, url);
+#endif
   curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
   curl_easy_setopt(curl, CURLOPT_USERAGENT, STNS_VERSION_WITH_NAME);
@@ -301,10 +324,19 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
     curl_easy_setopt(curl, CURLOPT_PROXY, c->http_proxy);
   }
 
+#ifdef DEBUG
+  syslog(LOG_ERR, "%s(stns)[L%d] before request http request: %s", __func__, __LINE__, url);
+#endif
   result = curl_easy_perform(curl);
+#ifdef DEBUG
+  syslog(LOG_ERR, "%s(stns)[L%d] after request http request: %s", __func__, __LINE__, url);
+#endif
 
   long code;
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+#ifdef DEBUG
+  syslog(LOG_ERR, "%s(stns)[L%d] get result  http request: %s", __func__, __LINE__, url);
+#endif
   if (code >= 400 || code == 0) {
     if (code != 404)
       syslog(LOG_ERR, "%s(stns)[L%d] http request failed: %s code:%ld", __func__, __LINE__, curl_easy_strerror(result),
@@ -315,11 +347,17 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
     result           = CURLE_HTTP_RETURNED_ERROR;
   }
 
+#ifdef DEBUG
+  syslog(LOG_ERR, "%s(stns)[L%d] before free", __func__, __LINE__);
+#endif
   free(auth);
   free(in_headers);
   free(url);
   curl_easy_cleanup(curl);
   curl_slist_free_all(headers);
+#ifdef DEBUG
+  syslog(LOG_ERR, "%s(stns)[L%d] after free", __func__, __LINE__);
+#endif
   return result;
 }
 
@@ -422,6 +460,7 @@ static void *delete_cache_files(void *data)
   if ((dp = opendir(dir)) == NULL) {
     syslog(LOG_ERR, "%s(stns)[L%d] cannot open %s: %s", __func__, __LINE__, dir, strerror(errno));
     pthread_mutex_unlock(&delete_mutex);
+    syslog(LOG_ERR, "%s(stns)[L%d] after cannot open %s: %s", __func__, __LINE__, dir, strerror(errno));
     return NULL;
   }
 
@@ -442,9 +481,15 @@ static void *delete_cache_files(void *data)
       }
     }
   }
+#ifdef DEBUG
+  syslog(LOG_ERR, "%s(stns)[L%d] before free", __func__, __LINE__);
+#endif
   free(buf);
   closedir(dp);
   pthread_mutex_unlock(&delete_mutex);
+#ifdef DEBUG
+  syslog(LOG_ERR, "%s(stns)[L%d] after free", __func__, __LINE__);
+#endif
   return NULL;
 }
 
@@ -466,7 +511,13 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
   char fpath[MAXBUF];
   sprintf(dpath, "%s/%d", c->cache_dir, geteuid());
   sprintf(fpath, "%s/%s", dpath, base);
+#ifdef DEBUG
+  syslog(LOG_ERR, "%s(stns)[L%d] before free", __func__, __LINE__);
+#endif
   free(base);
+#ifdef DEBUG
+  syslog(LOG_ERR, "%s(stns)[L%d] after free", __func__, __LINE__);
+#endif
 
   if (c->cache) {
     struct stat statbuf;
@@ -546,7 +597,13 @@ unsigned int match(char *pattern, char *text)
   rc = regcomp(&regex, pattern, REG_EXTENDED | REG_NOSUB);
   if (rc == 0)
     rc = regexec(&regex, text, 0, 0, 0);
+#ifdef DEBUG
+  syslog(LOG_ERR, "%s(stns)[L%d] before free", __func__, __LINE__);
+#endif
   regfree(&regex);
+#ifdef DEBUG
+  syslog(LOG_ERR, "%s(stns)[L%d] after free", __func__, __LINE__);
+#endif
   return rc == 0;
 }
 
@@ -563,12 +620,18 @@ int stns_exec_cmd(char *cmd, char *arg, stns_response_t *r)
     return 0;
   }
 
+#ifdef DEBUG
+  syslog(LOG_ERR, "%s(stns)[L%d] before malloc", __func__, __LINE__);
+#endif
   if (arg != NULL) {
     c = malloc(strlen(cmd) + strlen(arg) + 2);
     sprintf(c, "%s %s", cmd, arg);
   } else {
     c = cmd;
   }
+#ifdef DEBUG
+  syslog(LOG_ERR, "%s(stns)[L%d] after malloc", __func__, __LINE__);
+#endif
 
   if ((fp = popen(c, "r")) == NULL) {
     goto err;
@@ -580,11 +643,17 @@ int stns_exec_cmd(char *cmd, char *arg, stns_response_t *r)
 
   while (fgets(buf, sizeof(buf), fp) != NULL) {
     len = strlen(buf);
+#ifdef DEBUG
+    syslog(LOG_ERR, "%s(stns)[L%d] before malloc", __func__, __LINE__);
+#endif
     if (r->data) {
       r->data = (char *)realloc(r->data, total_len + len + 1);
     } else {
       r->data = (char *)malloc(total_len + len + 1);
     }
+#ifdef DEBUG
+    syslog(LOG_ERR, "%s(stns)[L%d] after malloc", __func__, __LINE__);
+#endif
     strcpy(r->data + total_len, buf);
     total_len += len;
   }
@@ -593,6 +662,9 @@ int stns_exec_cmd(char *cmd, char *arg, stns_response_t *r)
   if (total_len == 0) {
     goto err;
   }
+#ifdef DEBUG
+  syslog(LOG_ERR, "%s(stns)[L%d] before free", __func__, __LINE__);
+#endif
   if (arg != NULL)
     free(c);
 
@@ -601,6 +673,9 @@ int stns_exec_cmd(char *cmd, char *arg, stns_response_t *r)
 err:
   if (arg != NULL)
     free(c);
+#ifdef DEBUG
+  syslog(LOG_ERR, "%s(stns)[L%d] after free", __func__, __LINE__);
+#endif
   return 1;
 }
 
