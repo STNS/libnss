@@ -89,7 +89,31 @@ testdev: ## Test without dependencies installation
 		-o $(BUILD)/test
 		$(BUILD)/test --verbose
 build: nss_build key_wrapper_build
+build_static: nss_build_static key_wrapper_build
 nss_build: build_dir ## Build nss_stns
+	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Building nss_stns$(RESET)"
+	$(CC) $(CFLAGS) -c parson.c -o $(BUILD)/parson.o
+	$(CC) $(CFLAGS) -c toml.c -o $(BUILD)/toml.o
+	$(CC) $(CFLAGS) -c stns_passwd.c -o $(BUILD)/stns_passwd.o
+	$(CC) $(CFLAGS) -c stns_group.c -o $(BUILD)/stns_group.o
+	$(CC) $(CFLAGS) -c stns_shadow.c -o $(BUILD)/stns_shadow.o
+	$(CC) $(CFLAGS) -c stns.c -o $(BUILD)/stns.o
+	$(CC) -shared $(LD_SONAME) -o $(BUILD)/$(LIBRARY) \
+		$(BUILD)/stns.o \
+		$(BUILD)/stns_passwd.o \
+		$(BUILD)/parson.o \
+		$(BUILD)/toml.o \
+		$(BUILD)/stns_group.o \
+		$(BUILD)/stns_shadow.o \
+		-lcurl \
+		-lpthread \
+		-lssl \
+		-lcrypto \
+		-lz \
+		-ldl \
+		-lrt
+
+nss_build_static: build_dir ## Build nss_stns
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Building nss_stns$(RESET)"
 	$(CC) $(CFLAGS) -c parson.c -o $(BUILD)/parson.o
 	$(CC) $(CFLAGS) -c toml.c -o $(BUILD)/toml.o
@@ -150,6 +174,7 @@ install: install_lib install_key_wrapper ## Install stns
 install_lib: ## Install only shared objects
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Installing as Libraries$(RESET)"
 	[ -d $(LIBDIR) ] || install -d $(LIBDIR)
+	[ -e $(BUILD)/$(LIBRARY) ] && $(BUILD)/$(LIBRARY).old
 	install $(BUILD)/$(LIBRARY) $(LIBDIR)
 	cd $(LIBDIR); for link in $(LINKS); do ln -sf $(LIBRARY) $$link ; done;
 
@@ -216,7 +241,7 @@ changelog:
 
 docker:
 	docker rm -f libnss-stns | true
-	docker build -f dockerfiles/Dockerfile -t libnss_develop .
+	docker build -f dockerfiles/Dockerfile.ubuntu-16 -t libnss_develop .
 	docker run --privileged -d --name libnss-stns -v "`pwd`":/stns -it libnss_develop /sbin/init
 	docker exec -it libnss-stns /bin/bash
 

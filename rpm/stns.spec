@@ -26,7 +26,7 @@ We provide name resolution of Linux user group using STNS.
 %setup -q -n %{name}-%{version}
 
 %build
-make
+make build_static
 
 %install
 %{__rm} -rf %{buildroot}
