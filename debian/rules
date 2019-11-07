@@ -32,6 +32,7 @@ BINSYMDIR=$(PREFIX)/local/bin/
 
 override_dh_auto_install:
 	mkdir -p $(LIBDIR) $(BINDIR) $(CONFDIR)/stns/client/
+	[ ! `test -e $(LIBDIR)/libnss_stns.so.2.0` ] || $(LIBDIR)/libnss_stns.so.2.0.old
 	dh_auto_install -- LIBDIR=$(LIBDIR) PREFIX=$(PREFIX) BINDIR=$(BINDIR) BINSYMDIR=$(BINSYMDIR)
 	install -pm 644 stns.conf.example $(CONFDIR)/stns/client/stns.conf
 	find $(DESTDIR)

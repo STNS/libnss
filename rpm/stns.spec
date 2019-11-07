@@ -1,6 +1,6 @@
 Summary:          SimpleTomlNameService Nss Module
 Name:             libnss-stns-v2
-Version:          2.4.0
+Version:          2.4.1
 Release:          1
 License:          GPLv3
 URL:              https://github.com/STNS/STNS
@@ -26,16 +26,19 @@ We provide name resolution of Linux user group using STNS.
 %setup -q -n %{name}-%{version}
 
 %build
-make
+make build_static
 
 %install
 %{__rm} -rf %{buildroot}
 mkdir -p %{buildroot}/usr/{lib64,bin}
 mkdir -p %{buildroot}%{_sysconfdir}
+
+[ ! `test -e %{_libdir}/libnss_stns.so.2.0` ] || cp -p %{_libdir}/libnss_stns.so.2.0 %{_libdir}/libnss_stns.so.2.0.back
 make PREFIX=%{buildroot}/usr install
 install -d -m 1777 %{buildroot}/var/cache/stns
 install -d -m 0744 %{buildroot}%{_sysconfdir}/stns/client/
 install -m 644 stns.conf.example %{buildroot}%{_sysconfdir}/stns/client/stns.conf
+
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -60,6 +63,8 @@ systemctl status systemd-logind --no-pager && systemctl daemon-reload && systemc
 %config(noreplace) /etc/stns/client/stns.conf
 
 %changelog
+* Fri Sep 13 2019 pyama86 <www.kazu.com@gmail.com> - 2.4.1-1
+- #28 FIX #25 supprt tls ca filepath(@levkkuro)
 * Thu Sep 12 2019 pyama86 <www.kazu.com@gmail.com> - 2.4.0-1
 - #23 cache dir with sticky bit(@tnmt)
 - #26 we don't need errors when http returnc code is 404

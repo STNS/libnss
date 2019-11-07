@@ -10,5 +10,5 @@ Vcs-Git: https://github.com/STNS/STNS -b debian
 
 Package: libnss-stns-v2
 Architecture: amd64
-Depends: ${shlibs:Depends}, ${misc:Depends}, libc6, libssl-dev
+Depends: ${shlibs:Depends}, ${misc:Depends}, libc6, libssl-dev, libcurl4-openssl-dev
 Description: We provide name resolution of Linux user group using STNS.
