@@ -1,6 +1,6 @@
 Summary:          SimpleTomlNameService Nss Module
 Name:             libnss-stns-v2
-Version:          2.4.1
+Version:          2.5.1
 Release:          1
 License:          GPLv3
 URL:              https://github.com/STNS/STNS
@@ -63,6 +63,8 @@ systemctl status systemd-logind --no-pager && systemctl daemon-reload && systemc
 %config(noreplace) /etc/stns/client/stns.conf
 
 %changelog
+* Thu Nov 7 2019 pyama86 <www.kazu.com@gmail.com> - 2.5.1-1
+- #30 ubuntu uses libcurl.
 * Fri Sep 13 2019 pyama86 <www.kazu.com@gmail.com> - 2.4.1-1
 - #28 FIX #25 supprt tls ca filepath(@levkkuro)
 * Thu Sep 12 2019 pyama86 <www.kazu.com@gmail.com> - 2.4.0-1

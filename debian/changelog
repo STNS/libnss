@@ -1,3 +1,8 @@
+libnss-stns-v2 (2.5.1-1) xenial; urgency=medium
+
+  * #30 ubuntu uses libcurl.
+
+ -- pyama86 <www.kazu.com@gmail.com>  Thu, 7 Nov 2019 15:00:00 +0900
 libnss-stns-v2 (2.4.1-1) xenial; urgency=medium
 
   * #28 FIX #25 supprt tls ca filepath(@levkkuro)
