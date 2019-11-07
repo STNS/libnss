@@ -32,10 +32,13 @@ make build_static
 %{__rm} -rf %{buildroot}
 mkdir -p %{buildroot}/usr/{lib64,bin}
 mkdir -p %{buildroot}%{_sysconfdir}
+
+[ ! `test -e %{_libdir}/libnss_stns.so.2.0` ] || cp -p %{_libdir}/libnss_stns.so.2.0 %{_libdir}/libnss_stns.so.2.0.back
 make PREFIX=%{buildroot}/usr install
 install -d -m 1777 %{buildroot}/var/cache/stns
 install -d -m 0744 %{buildroot}%{_sysconfdir}/stns/client/
 install -m 644 stns.conf.example %{buildroot}%{_sysconfdir}/stns/client/stns.conf
+
 
 %clean
 %{__rm} -rf %{buildroot}

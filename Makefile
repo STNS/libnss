@@ -174,7 +174,6 @@ install: install_lib install_key_wrapper ## Install stns
 install_lib: ## Install only shared objects
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Installing as Libraries$(RESET)"
 	[ -d $(LIBDIR) ] || install -d $(LIBDIR)
-	[ -e $(BUILD)/$(LIBRARY) ] && $(BUILD)/$(LIBRARY).old
 	install $(BUILD)/$(LIBRARY) $(LIBDIR)
 	cd $(LIBDIR); for link in $(LINKS); do ln -sf $(LIBRARY) $$link ; done;
 
@@ -231,7 +230,6 @@ pkg: ## Create some distribution packages
 	rm -rf builds && mkdir builds
 	docker-compose run --rm -v `pwd`:/stns nss_centos6
 	docker-compose run --rm -v `pwd`:/stns nss_centos7
-	docker-compose run --rm -v `pwd`:/stns nss_ubuntu14
 	docker-compose run --rm -v `pwd`:/stns nss_ubuntu16
 	docker-compose run --rm -v `pwd`:/stns nss_debian8
 	docker-compose run --rm -v `pwd`:/stns nss_debian9
