@@ -231,6 +231,7 @@ pkg: ## Create some distribution packages
 	docker-compose run --rm -v `pwd`:/stns nss_centos6
 	docker-compose run --rm -v `pwd`:/stns nss_centos7
 	docker-compose run --rm -v `pwd`:/stns nss_ubuntu16
+	docker-compose run --rm -v `pwd`:/stns nss_ubuntu18
 	docker-compose run --rm -v `pwd`:/stns nss_debian8
 	docker-compose run --rm -v `pwd`:/stns nss_debian9
 
