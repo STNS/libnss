@@ -27,6 +27,15 @@ services:
     environment:
       DIST: xenial
     command: make deb
+  nss_ubuntu18:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.ubuntu-18
+    volumes:
+      - .:/stns
+    environment:
+      DIST: bionic
+    command: make deb
   nss_debian8:
     build:
       context: .
