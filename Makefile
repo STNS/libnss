@@ -1,6 +1,7 @@
 # The base of this code is https://github.com/pyama86/stns/blob/master/Makefile
 CC=gcc
 CFLAGS=-Wall -Wstrict-prototypes -Werror -fPIC -std=c99 -D_GNU_SOURCE -I/usr/local/curl/include
+LDFLAGS=-Wl,--version-script,libstns.map
 
 LIBRARY=libnss_stns.so.2.0
 KEY_WRAPPER=stns-key-wrapper
@@ -98,7 +99,7 @@ nss_build: build_dir ## Build nss_stns
 	$(CC) $(CFLAGS) -c stns_group.c -o $(BUILD)/stns_group.o
 	$(CC) $(CFLAGS) -c stns_shadow.c -o $(BUILD)/stns_shadow.o
 	$(CC) $(CFLAGS) -c stns.c -o $(BUILD)/stns.o
-	$(CC) -shared $(LD_SONAME) -o $(BUILD)/$(LIBRARY) \
+	$(CC) $(LDFLAGS) -shared $(LD_SONAME) -o $(BUILD)/$(LIBRARY) \
 		$(BUILD)/stns.o \
 		$(BUILD)/stns_passwd.o \
 		$(BUILD)/parson.o \
@@ -121,7 +122,7 @@ nss_build_static: build_dir ## Build nss_stns
 	$(CC) $(CFLAGS) -c stns_group.c -o $(BUILD)/stns_group.o
 	$(CC) $(CFLAGS) -c stns_shadow.c -o $(BUILD)/stns_shadow.o
 	$(CC) $(CFLAGS) -c stns.c -o $(BUILD)/stns.o
-	$(CC) -shared $(LD_SONAME) -o $(BUILD)/$(LIBRARY) \
+	$(CC) $(LDFLAGS) -shared $(LD_SONAME) -o $(BUILD)/$(LIBRARY) \
 		$(BUILD)/stns.o \
 		$(BUILD)/stns_passwd.o \
 		$(BUILD)/parson.o \

@@ -1,0 +1,19 @@
+{
+  global:
+    _nss_stns_endgrent;
+    _nss_stns_endpwent;
+    _nss_stns_endspent;
+    _nss_stns_getgrent_r;
+    _nss_stns_getgrgid_r;
+    _nss_stns_getgrnam_r;
+    _nss_stns_getpwent_r;
+    _nss_stns_getpwnam_r;
+    _nss_stns_getpwuid_r;
+    _nss_stns_getspent_r;
+    _nss_stns_getspnam_r;
+    _nss_stns_getspuid_r;
+    _nss_stns_setgrent;
+    _nss_stns_setpwent;
+    _nss_stns_setspent;
+  local: *;
+};
