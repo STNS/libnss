@@ -561,6 +561,7 @@ request:
           break;
         }
         sleep(1);
+        syslog(LOG_NOTICE, "%s(stns)[L%d] %d retries remaining", __func__, __LINE__, retry_count);
         result = inner_http_request(c, path, res);
         retry_count--;
       } else {
