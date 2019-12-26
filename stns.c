@@ -344,7 +344,8 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
     res->data        = NULL;
     res->size        = 0;
     res->status_code = code;
-    result           = CURLE_HTTP_RETURNED_ERROR;
+    if (code != 0)
+      result = CURLE_HTTP_RETURNED_ERROR;
   }
 
 #ifdef DEBUG
