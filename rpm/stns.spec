@@ -45,7 +45,7 @@ install -m 644 stns.conf.example %{buildroot}%{_sysconfdir}/stns/client/stns.con
 
 %post
 sed -i "s/^IPAddressDeny=any/#IPAddressDeny=any/" /lib/systemd/system/systemd-logind.service || true
-systemctl status systemd-logind --no-pager && systemctl daemon-reload && systemctl restart systemd-logind
+(! which systemctl &> /dev/null) || (systemctl status systemd-logind --no-pager && systemctl daemon-reload && systemctl restart systemd-logind)
 
 %preun
 
