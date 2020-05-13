@@ -52,7 +52,6 @@ void readfile(char *file, char **result)
     strcpy(*result + total, buff);
     total += len;
   }
-  free(result);
   fclose(fp);
 }
 
@@ -81,6 +80,7 @@ Test(stns_load_config, load_ok)
   cr_assert_eq(c.http_headers->size, 1);
   cr_assert_str_eq(c.http_headers->headers[0].key, "X-API-TOKEN");
   cr_assert_str_eq(c.http_headers->headers[0].value, "token");
+  stns_unload_config(&c);
 }
 
 Test(stns_request, http_request)
@@ -103,14 +103,15 @@ Test(stns_request, http_cache)
   sprintf(path, "/var/cache/stns/%d/%s", geteuid(), "get%3Fexample");
 
   c.cache     = 1;
-  c.cache_ttl = 2;
+  c.cache_ttl = 1;
 
   stns_request(&c, "get?example", &r);
   cr_assert_eq(stat(path, &st), 0);
-  sleep(5);
+  sleep(2);
   // deleted by thread
   stns_request(&c, "get?notfound", &r);
   cr_assert_eq(stat(path, &st), -1);
+  free(r.data);
 }
 
 Test(stns_request, http_notfound)
@@ -121,6 +122,7 @@ Test(stns_request, http_notfound)
   c.cache = 0;
 
   cr_assert_eq(stns_request(&c, "status/404", &r), CURLE_HTTP_RETURNED_ERROR);
+  free(r.data);
 }
 
 Test(stns_request, wrapper_request_ok)
@@ -136,6 +138,7 @@ Test(stns_request, wrapper_request_ok)
   res = stns_request(&c, "users?name=test", &r);
   cr_assert_str_eq(r.data, "ok\n");
   cr_assert_eq(res, 0);
+  free(r.data);
 }
 
 Test(stns_request, wrapper_request_ng)
@@ -149,6 +152,7 @@ Test(stns_request, wrapper_request_ng)
 
   res = stns_request(&c, NULL, &r);
   cr_assert_eq(res, 22);
+  free(r.data);
 }
 
 Test(stns_request, http_request_with_header)
@@ -170,15 +174,10 @@ Test(stns_request, http_request_with_header)
   c.auth_token      = NULL;
   stns_request(&c, "headers", &r);
 
-  cr_assert_str_eq(r.data, "{\n\
-  \"headers\": {\n\
-    \"Accept\": \"*/*\", \n\
-    \"Host\": \"httpbin.org\", \n\
-    \"Test-Key1\": \"test_value1\", \n\
-    \"Test-Key2\": \"test_value2\", \n\
-    \"User-Agent\": \"stns/2.0.0\"\n\
-  }\n\
-}\n");
+  cr_assert(strstr(r.data, "\"Test-Key1\": \"test_value1\""));
+  free(r.data);
+  free(c.http_headers);
+  free(http_headers);
 }
 
 Test(stns_request_available, ok)

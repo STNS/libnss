@@ -44,6 +44,7 @@ Test(ensure_group_by_name, ok)
   strcpy(n, "");
   code = ensure_group_by_name(n, &c, "group3", &grd, buffer, MAXBUF, 0);
   cr_assert_eq(code, NSS_STATUS_UNAVAIL);
+  free(json);
 }
 
 Test(ensure_group_by_gid, ok)
