@@ -52,6 +52,7 @@ void readfile(char *file, char **result)
     strcpy(*result + total, buff);
     total += len;
   }
+  free(result);
   fclose(fp);
 }
 
