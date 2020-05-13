@@ -1,7 +1,7 @@
 Summary:          SimpleTomlNameService Nss Module
 Name:             libnss-stns-v2
 Version:          2.5.3
-Release:          1
+Release:          2
 License:          GPLv3
 URL:              https://github.com/STNS/STNS
 Source:           %{name}-%{version}.tar.gz
@@ -63,6 +63,8 @@ sed -i "s/^IPAddressDeny=any/#IPAddressDeny=any/" /lib/systemd/system/systemd-lo
 %config(noreplace) /etc/stns/client/stns.conf
 
 %changelog
+* Wed May 13 2020 pyama86 <www.kazu.com@gmail.com> - 2.5.3-2
+- check for the existence systemctl command
 * Fri Dec 27 2019 pyama86 <www.kazu.com@gmail.com> - 2.5.3-1
 - #34 Retry inner_http_request when CURLINFO_RESPONSE_CODE is 0.(@sugy)
 * Tue Nov 26 2019 pyama86 <www.kazu.com@gmail.com> - 2.5.2-1
