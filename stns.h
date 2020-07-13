@@ -19,8 +19,8 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <regex.h>
-#define STNS_VERSION "2.0.0"
-#define STNS_VERSION_WITH_NAME "stns/" STNS_VERSION
+#define STNSD_VERSION "0.0.1"
+#define STNSD_VERSION_WITH_NAME "stnsd/" STNSD_VERSION
 // 10MB
 #define STNS_MAX_BUFFER_SIZE (10 * 1024 * 1024)
 #define STNS_CONFIG_FILE "/etc/stns/client/stns.conf"
@@ -50,27 +50,14 @@ struct stns_user_httpheaders_t {
 
 typedef struct stns_conf_t stns_conf_t;
 struct stns_conf_t {
-  char *api_endpoint;
-  char *auth_token;
-  char *user;
-  char *password;
   char *query_wrapper;
   char *chain_ssh_wrapper;
-  char *http_proxy;
-  char *cache_dir;
-  char *tls_cert;
-  char *tls_key;
-  char *tls_ca;
-  stns_user_httpheaders_t *http_headers;
+  char *unix_socket;
   int uid_shift;
   int gid_shift;
-  int ssl_verify;
   int request_timeout;
   int request_retry;
   int request_locktime;
-  int cache;
-  int cache_ttl;
-  int negative_cache_ttl;
 };
 
 extern int stns_load_config(char *, stns_conf_t *);

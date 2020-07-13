@@ -18,22 +18,32 @@ BINDIR=$(PREFIX)/lib/stns
 BINSYMDIR=$(PREFIX)/local/bin/
 
 BUILD=tmp/libs
-CACHE=/var/cache/stns
 CRITERION_VERSION=2.3.2
 SHUNIT_VERSION=2.1.6
 CURL_VERSION=7.64.0
 SOURCES=Makefile stns.h stns.c stns*.c stns*.h toml.h toml.c parson.h parson.c stns.conf.example test libstns.map
 DIST ?= unknown
+STNSD_VERSION=0.0.1
 
 default: build
-ci: curl depsdev test integration
+ci: curl test integration
 test: testdev ## Test with dependencies installation
+	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Testing$(RESET)"
+	$(CC) -g3 -fsanitize=address -O0 -fno-omit-frame-pointer -I/usr/local/curl/include \
+	  stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c stns_test.c stns_group_test.c stns_shadow_test.c stns_passwd_test.c \
+		/usr/local/curl/lib/libcurl.a \
+		-lcriterion \
+		-lpthread \
+		-lssl \
+		-lcrypto \
+		-lz \
+		-ldl \
+		-lrt \
+		-o $(BUILD)/test
+		$(BUILD)/test --verbose
 
 build_dir: ## Create directory for build
 	test -d $(BUILD) || mkdir -p $(BUILD)
-
-cache_dir: ## Create directory for cache
-	test -d $(CACHE) || mkdir -p $(CACHE)
 
 local_build: curl build
 curl: build_dir
@@ -60,10 +70,11 @@ curl: build_dir
 	  --disable-smb \
 	  --without-libidn && make && make install)
 
-depsdev: build_dir cache_dir ## Installing dependencies for development
+
+criterion:  ## Installing dependencies for development
 	test -f $(BUILD)/criterion.tar.bz2 || curl -sL https://github.com/Snaipe/Criterion/releases/download/v$(CRITERION_VERSION)/criterion-v$(CRITERION_VERSION)-linux-x86_64.tar.bz2 -o $(BUILD)/criterion.tar.bz2
-	cd $(BUILD); tar xf criterion.tar.bz2; cd ../
-	test -d /usr/include/criterion || mv $(BUILD)/criterion-v$(CRITERION_VERSION)/include/criterion /usr/include/criterion && mv $(BUILD)/criterion-v$(CRITERION_VERSION)/lib/libcriterion.* $(LIBDIR)/
+	test -d /usr/include/criterion || cd $(BUILD); tar xf criterion.tar.bz2; cd ../
+	test -d /usr/include/criterion || (mv $(BUILD)/criterion-v$(CRITERION_VERSION)/include/criterion /usr/include/criterion && mv $(BUILD)/criterion-v$(CRITERION_VERSION)/lib/libcriterion.* $(LIBDIR)/)
 	test -f $(BUILD)/shunit2.tgz || curl -sL https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/shunit2/shunit2-$(SHUNIT_VERSION).tgz -o $(BUILD)/shunit2.tgz
 	cd $(BUILD); tar xf shunit2.tgz; cd ../
 	test -d /usr/include/shunit2 || mv $(BUILD)/shunit2-$(SHUNIT_VERSION)/ /usr/include/shunit2
@@ -75,20 +86,8 @@ debug:
 		-lcurl -lpthread -o $(BUILD)/debug && \
 		$(BUILD)/debug && valgrind --leak-check=full tmp/libs/debug
 
-testdev: ## Test without dependencies installation
-	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Testing$(RESET)"
-	$(CC) -g3 -fsanitize=address -O0 -fno-omit-frame-pointer -I/usr/local/curl/include \
-	  stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c stns_test.c stns_group_test.c stns_shadow_test.c stns_passwd_test.c \
-		/usr/local/curl/lib/libcurl.a \
-		-lcriterion \
-		-lpthread \
-		-lssl \
-		-lcrypto \
-		-lz \
-		-ldl \
-		-lrt \
-		-o $(BUILD)/test
-		$(BUILD)/test --verbose
+testdev: build_dir curl criterion stnsd  ## Test without dependencies installation
+
 build: nss_build key_wrapper_build
 build_static: nss_build_static key_wrapper_build
 nss_build: build_dir ## Build nss_stns
@@ -156,7 +155,7 @@ key_wrapper_build: build_dir ## Build nss_stns
 		-ldl \
 		-lrt
 
-integration: curl build install depsdev ## Run integration test
+integration: testdev build install ## Run integration test
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Integration Testing$(RESET)"
 	mkdir -p /etc/stns/client
 	mkdir -p /etc/stns/server
@@ -248,4 +247,11 @@ docker:
 github_release: ## Create some distribution packages
 	ghr -u STNS --replace v$(VERSION) builds/
 
-.PHONY: depsdev test testdev build
+stnsd:
+	(dpkg -l |grep stnsd) || curl -L -O https://github.com/STNS/cache-stnsd/releases/download/v$(STNSD_VERSION)/cache-stnsd_$(STNSD_VERSION)-1_amd64.xenial.deb
+	(dpkg -l |grep stnsd) || dpkg -i cache-stnsd_$(STNSD_VERSION)-1_amd64.xenial.deb
+	mkdir -p /etc/stns/client/
+	echo 'api_endpoint = "https://httpbin.org"' > /etc/stns/client/stns.conf
+	service stnsd start
+
+.PHONY: test testdev build
