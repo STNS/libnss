@@ -7,7 +7,7 @@ stns_conf_t test_conf()
   c.query_wrapper   = NULL;
   c.request_timeout = 3;
   c.request_retry   = 3;
-  c.unix_socket     = "/var/run/stnsd.sock";
+  c.unix_socket     = "/var/run/cache-stnsd.sock";
   return c;
 }
 void readfile(char *file, char **result)
@@ -52,7 +52,7 @@ Test(stns_load_config, load_ok)
 
   cr_assert_str_eq(c.chain_ssh_wrapper, "/usr/libexec/openssh/ssh-ldap-wrapper");
   cr_assert_str_eq(c.query_wrapper, "/usr/local/bin/stns-wrapper");
-  cr_assert_str_eq(c.unix_socket, "/var/run/stnsd.sock");
+  cr_assert_str_eq(c.unix_socket, "/var/run/cache-stnsd.sock");
   cr_assert_eq(c.uid_shift, 1000);
   cr_assert_eq(c.gid_shift, 2000);
   cr_assert_eq(c.request_timeout, 3);
