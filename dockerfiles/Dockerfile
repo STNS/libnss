@@ -1,4 +1,4 @@
-FROM centos:latest
+FROM centos:7
 MAINTAINER pyama86 <www.kazu.com@gmail.com>
 RUN yum install -y sudo
 RUN curl -fsSL https://repo.stns.jp/scripts/yum-repo.sh | sh

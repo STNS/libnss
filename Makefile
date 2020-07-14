@@ -21,7 +21,8 @@ BUILD=tmp/libs
 CRITERION_VERSION=2.3.2
 SHUNIT_VERSION=2.1.6
 CURL_VERSION=7.71.1
-SOURCES=Makefile stns.h stns.c stns*.c stns*.h toml.h toml.c parson.h parson.c stns.conf.example test libstns.map DIST ?= unknown
+SOURCES=Makefile stns.h stns.c stns*.c stns*.h toml.h toml.c parson.h parson.c stns.conf.example test libstns.map
+DIST ?= unknown
 STNSD_VERSION=0.0.1
 
 default: build
@@ -232,6 +233,7 @@ pkg: ## Create some distribution packages
 	rm -rf builds && mkdir builds
 	docker-compose run --rm -v `pwd`:/stns nss_centos6
 	docker-compose run --rm -v `pwd`:/stns nss_centos7
+	docker-compose run --rm -v `pwd`:/stns nss_centos8
 	docker-compose run --rm -v `pwd`:/stns nss_ubuntu16
 	docker-compose run --rm -v `pwd`:/stns nss_ubuntu18
 	docker-compose run --rm -v `pwd`:/stns nss_debian8
@@ -259,8 +261,8 @@ stnsd:
 	  curl -s -L -O https://github.com/STNS/cache-stnsd/releases/download/v$(STNSD_VERSION)/cache-stnsd_$(STNSD_VERSION)-1_amd64.xenial.deb && \
 	  dpkg -i cache-stnsd_$(STNSD_VERSION)-1_amd64.xenial.deb) | true
 	! test -e /etc/redhat-release || (! (rpm -qa |grep stnsd) && \
-	  curl -s -L -O https://github.com/STNS/cache-stnsd/releases/download/v$(STNSD_VERSION)/cache-stnsd-$(STNSD_VERSION)-1.x86_64.el7.rpm && \
-	  rpm -ivh cache-stnsd-$(STNSD_VERSION)-1.x86_64.el7.rpm) | true
+	  curl -s -L -O https://github.com/STNS/cache-stnsd/releases/download/v$(STNSD_VERSION)/cache-stnsd-$(STNSD_VERSION)-1.x86_64.el8.rpm && \
+	  rpm -ivh cache-stnsd-$(STNSD_VERSION)-1.x86_64.el8.rpm) | true
 	service cache-stnsd start
 
 .PHONY: test testdev build
