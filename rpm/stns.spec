@@ -8,10 +8,10 @@ Source:           %{name}-%{version}.tar.gz
 Group:            System Environment/Base
 Packager:         pyama86 <www.kazu.com@gmail.com>
 %if 0%{?rhel} < 7
-Requires:         glibc openssl
+Requires:         glibc openssl cache-stnsd
 BuildRequires:    gcc make openssl-devel
 %else
-Requires:         glibc openssl-libs
+Requires:         glibc openssl-libs cache-stnsd
 BuildRequires:    gcc make openssl-devel
 %endif
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)

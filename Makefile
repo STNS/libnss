@@ -250,8 +250,8 @@ login: docker
 	docker exec -it libnss-stns /bin/bash
 
 test_on_docker: docker
-	docker exec -it libnss-stns make test
-	docker exec -it libnss-stns make integration
+	docker exec -t libnss-stns make test
+	docker exec -t libnss-stns make integration
 
 github_release: ## Create some distribution packages
 	ghr -u STNS --replace v$(VERSION) builds/
