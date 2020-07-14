@@ -1,7 +1,7 @@
 Summary:          SimpleTomlNameService Nss Module
 Name:             libnss-stns-v2
-Version:          2.5.3
-Release:          2
+Version:          2.6.0
+Release:          1
 License:          GPLv3
 URL:              https://github.com/STNS/STNS
 Source:           %{name}-%{version}.tar.gz
@@ -35,7 +35,6 @@ mkdir -p %{buildroot}%{_sysconfdir}
 
 [ ! `test -e %{_libdir}/libnss_stns.so.2.0` ] || cp -p %{_libdir}/libnss_stns.so.2.0 %{_libdir}/libnss_stns.so.2.0.back
 make PREFIX=%{buildroot}/usr install
-install -d -m 1777 %{buildroot}/var/cache/stns
 install -d -m 0744 %{buildroot}%{_sysconfdir}/stns/client/
 install -m 644 stns.conf.example %{buildroot}%{_sysconfdir}/stns/client/stns.conf
 
@@ -59,10 +58,11 @@ sed -i "s/^IPAddressDeny=any/#IPAddressDeny=any/" /lib/systemd/system/systemd-lo
 /usr/lib64/libnss_stns.so.2.0
 /usr/lib/stns/stns-key-wrapper
 /usr/local/bin/stns-key-wrapper
-/var/cache/stns
 %config(noreplace) /etc/stns/client/stns.conf
 
 %changelog
+* Tue Jul 14 2020 pyama86 <www.kazu.com@gmail.com> - 2.6.0-1
+- use cache-stnsd
 * Wed May 13 2020 pyama86 <www.kazu.com@gmail.com> - 2.5.3-2
 - check for the existence systemctl command
 * Fri Dec 27 2019 pyama86 <www.kazu.com@gmail.com> - 2.5.3-1

@@ -17,13 +17,8 @@ set -e
 # for details, see https://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 
-sed -i "s/^IPAddressDeny=any/#IPAddressDeny=any/" /lib/systemd/system/systemd-logind.service || true
-systemctl status systemd-logind --no-pager && systemctl daemon-reload && systemctl restart systemd-logind
-
 case "$1" in
     configure)
-        mkdir -p /var/cache/stns
-        chmod 1777 /var/cache/stns
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
