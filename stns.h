@@ -19,8 +19,8 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <regex.h>
-#define STNSD_VERSION "0.0.1"
-#define STNSD_VERSION_WITH_NAME "stnsd/" STNSD_VERSION
+#define STNS_VERSION "2.0.0"
+#define STNS_VERSION_WITH_NAME "stns/" STNS_VERSION
 // 10MB
 #define STNS_MAX_BUFFER_SIZE (10 * 1024 * 1024)
 #define STNS_CONFIG_FILE "/etc/stns/client/stns.conf"
@@ -50,14 +50,29 @@ struct stns_user_httpheaders_t {
 
 typedef struct stns_conf_t stns_conf_t;
 struct stns_conf_t {
+  char *api_endpoint;
+  char *auth_token;
+  char *user;
+  char *password;
   char *query_wrapper;
   char *chain_ssh_wrapper;
   char *unix_socket;
+  char *http_proxy;
+  char *cache_dir;
+  char *tls_cert;
+  char *tls_key;
+  char *tls_ca;
+  stns_user_httpheaders_t *http_headers;
   int uid_shift;
   int gid_shift;
+  int ssl_verify;
+  int use_cached;
   int request_timeout;
   int request_retry;
   int request_locktime;
+  int cache;
+  int cache_ttl;
+  int negative_cache_ttl;
 };
 
 extern int stns_load_config(char *, stns_conf_t *);
@@ -286,6 +301,18 @@ extern void set_group_lowest_id(int);
     }                                                                                                                  \
   } else {                                                                                                             \
     str_or_int(m, empty)                                                                                               \
+  }
+#define GET_TOML_BY_TABLE_KEY(t, m, method, empty, str_or_int)                                                         \
+  if (0 != (in_tab = toml_table_in(tab, #t))) {                                                                        \
+    if (0 != (raw = toml_raw_in(in_tab, #m))) {                                                                        \
+      if (0 != method(raw, &c->t##_##m)) {                                                                             \
+        syslog(LOG_ERR, "%s(stns)[L%d] cannot parse toml file:%s key:%s", __func__, __LINE__, filename, #m);           \
+      }                                                                                                                \
+    } else {                                                                                                           \
+      str_or_int(t##_##m, empty)                                                                                       \
+    }                                                                                                                  \
+  } else {                                                                                                             \
+    str_or_int(t##_##m, empty)                                                                                         \
   }
 
 #define UNLOAD_TOML_BYKEY(m)                                                                                           \
