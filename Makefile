@@ -240,7 +240,7 @@ changelog:
 
 docker:
 	docker rm -f libnss-stns | true
-	docker build -f dockerfiles/Dockerfile.ubuntu-16 -t libnss_develop .
+	docker build -f dockerfiles/Dockerfile -t libnss_develop .
 	docker run --privileged -d --name libnss-stns -v "`pwd`":/stns -it libnss_develop /sbin/init
 	docker exec -it libnss-stns /bin/bash
 

@@ -39,8 +39,7 @@ ID_QUERY_AVAILABLE(group, low, >)
 int stns_load_config(char *filename, stns_conf_t *c)
 {
   char errbuf[200];
-  const char *raw, *key;
-  toml_table_t *in_tab;
+  const char *raw;
 
 #ifdef DEBUG
   syslog(LOG_ERR, "%s(stns)[L%d] start load config", __func__, __LINE__);
@@ -269,7 +268,6 @@ int stns_import_file(char *file, stns_response_t *res)
 int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
 {
   CURLcode result;
-  pthread_t pthread;
   int retry_count  = c->request_retry;
   res->data        = (char *)malloc(sizeof(char));
   res->size        = 0;
