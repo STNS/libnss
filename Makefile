@@ -171,6 +171,8 @@ integration: testdev build install ## Run integration test
 	sed -i -e 's/^group:.*/group: files stns/g' /etc/nsswitch.conf
 	grep test /etc/sudoers || echo 'test ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 	test/integration_test.sh
+	echo "use_cached = true" >> /etc/stns/client/stns.conf && service cache-stnsd restart
+	test/integration_test.sh
 
 install: install_lib install_key_wrapper ## Install stns
 

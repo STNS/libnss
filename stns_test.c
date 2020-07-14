@@ -7,9 +7,11 @@ stns_conf_t test_conf()
   c.api_endpoint    = "https://httpbin.org";
   c.http_proxy      = NULL;
   c.cache_dir       = "/var/cache/stns";
+  c.unix_socket     = "/var/run/cache-stnsd.sock";
   c.cache           = 0;
   c.user            = NULL;
   c.ssl_verify      = 0;
+  c.use_cached      = 0;
   c.password        = NULL;
   c.query_wrapper   = NULL;
   c.tls_cert        = NULL;
@@ -21,6 +23,7 @@ stns_conf_t test_conf()
   c.auth_token      = NULL;
   return c;
 }
+
 void readfile(char *file, char **result)
 {
   FILE *fp;
@@ -222,4 +225,27 @@ Test(query_available, ok)
   cr_assert_eq(stns_group_highest_query_available(11), 0);
   cr_assert_eq(stns_group_lowest_query_available(4), 1);
   cr_assert_eq(stns_group_lowest_query_available(2), 0);
+}
+
+Test(stns_request, http_request_with_cached)
+{
+  char expect_body[1024];
+  stns_conf_t c = test_conf();
+  c.use_cached  = 1;
+  stns_response_t r;
+  stns_request(&c, "user-agent", &r);
+
+  sprintf(expect_body, "{\n  \"user-agent\": \"%s\"\n}\n", "cache-stnsd/0.0.1");
+  cr_assert_str_eq(r.data, expect_body);
+}
+
+Test(stns_request, http_request_notfound_with_cached)
+{
+  char expect_body[1024];
+  stns_conf_t c = test_conf();
+  c.use_cached  = 1;
+  stns_response_t r;
+
+  cr_assert_eq(stns_request(&c, "status/404", &r), CURLE_HTTP_RETURNED_ERROR);
+  free(r.data);
 }

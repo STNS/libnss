@@ -137,6 +137,7 @@ int stns_load_config(char *filename, stns_conf_t *c)
     }
     c->http_headers->headers = http_headers;
     c->http_headers->size    = (size_t)header_size;
+
   } else {
     c->http_headers = NULL;
   }
@@ -257,35 +258,6 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
   CURLcode result;
   struct curl_slist *headers = NULL;
 
-  if (c->auth_token != NULL) {
-    auth = (char *)malloc(strlen(c->auth_token) + 22);
-    sprintf(auth, "Authorization: token %s", c->auth_token);
-  } else {
-    auth = NULL;
-  }
-
-  url = (char *)malloc(strlen(c->api_endpoint) + strlen(path) + 2);
-  sprintf(url, "%s/%s", c->api_endpoint, path);
-
-  if (auth != NULL) {
-    headers = curl_slist_append(headers, auth);
-  }
-
-  if (c->http_headers != NULL) {
-
-    int i, size = 0;
-    for (i = 0; i < c->http_headers->size; i++) {
-      size += strlen(c->http_headers->headers[i].key) + strlen(c->http_headers->headers[i].value) + 3;
-      if (in_headers == NULL)
-        in_headers = (char *)malloc(size);
-      else
-        in_headers = (char *)realloc(in_headers, size);
-
-      sprintf(in_headers, "%s: %s", c->http_headers->headers[i].key, c->http_headers->headers[i].value);
-      headers = curl_slist_append(headers, in_headers);
-    }
-  }
-
 #ifdef DEBUG
   syslog(LOG_ERR, "%s(stns)[L%d] send http request: %s", __func__, __LINE__, url);
 #endif
@@ -293,39 +265,73 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
 #ifdef DEBUG
   syslog(LOG_ERR, "%s(stns)[L%d] init http request: %s", __func__, __LINE__, url);
 #endif
+
+  if (!c->use_cached) {
+    if (c->auth_token != NULL) {
+      auth = (char *)malloc(strlen(c->auth_token) + 22);
+      sprintf(auth, "Authorization: token %s", c->auth_token);
+    } else {
+      auth = NULL;
+    }
+
+    url = (char *)malloc(strlen(c->api_endpoint) + strlen(path) + 2);
+    sprintf(url, "%s/%s", c->api_endpoint, path);
+
+    if (auth != NULL) {
+      headers = curl_slist_append(headers, auth);
+    }
+
+    if (c->http_headers != NULL) {
+
+      int i, size = 0;
+      for (i = 0; i < c->http_headers->size; i++) {
+        size += strlen(c->http_headers->headers[i].key) + strlen(c->http_headers->headers[i].value) + 3;
+        if (in_headers == NULL)
+          in_headers = (char *)malloc(size);
+        else
+          in_headers = (char *)realloc(in_headers, size);
+
+        sprintf(in_headers, "%s: %s", c->http_headers->headers[i].key, c->http_headers->headers[i].value);
+        headers = curl_slist_append(headers, in_headers);
+      }
+    }
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, c->ssl_verify);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, c->ssl_verify);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, STNS_VERSION_WITH_NAME);
+    if (c->tls_cert != NULL && c->tls_key != NULL) {
+      curl_easy_setopt(curl, CURLOPT_SSLCERT, c->tls_cert);
+      curl_easy_setopt(curl, CURLOPT_SSLKEY, c->tls_key);
+    }
+
+    if (c->tls_ca != NULL) {
+      curl_easy_setopt(curl, CURLOPT_CAINFO, c->tls_ca);
+    }
+
+    if (c->user != NULL) {
+      curl_easy_setopt(curl, CURLOPT_USERNAME, c->user);
+    }
+
+    if (c->password != NULL) {
+      curl_easy_setopt(curl, CURLOPT_PASSWORD, c->password);
+    }
+
+    if (c->http_proxy != NULL) {
+      curl_easy_setopt(curl, CURLOPT_PROXY, c->http_proxy);
+    }
+  } else {
+    curl_easy_setopt(curl, CURLOPT_UNIX_SOCKET_PATH, c->unix_socket);
+    url = (char *)malloc(strlen("http://unix") + strlen(path) + 2);
+    sprintf(url, "%s/%s", "http://unix", path);
+  }
   curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
-  curl_easy_setopt(curl, CURLOPT_USERAGENT, STNS_VERSION_WITH_NAME);
-  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-  curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, c->ssl_verify);
-  curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, c->ssl_verify);
   curl_easy_setopt(curl, CURLOPT_TIMEOUT, c->request_timeout);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
   curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, header_callback);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, res);
   curl_easy_setopt(curl, CURLOPT_HEADERDATA, c);
   curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
-
-  if (c->tls_cert != NULL && c->tls_key != NULL) {
-    curl_easy_setopt(curl, CURLOPT_SSLCERT, c->tls_cert);
-    curl_easy_setopt(curl, CURLOPT_SSLKEY, c->tls_key);
-  }
-
-  if (c->tls_ca != NULL) {
-    curl_easy_setopt(curl, CURLOPT_CAINFO, c->tls_ca);
-  }
-
-  if (c->user != NULL) {
-    curl_easy_setopt(curl, CURLOPT_USERNAME, c->user);
-  }
-
-  if (c->password != NULL) {
-    curl_easy_setopt(curl, CURLOPT_PASSWORD, c->password);
-  }
-
-  if (c->http_proxy != NULL) {
-    curl_easy_setopt(curl, CURLOPT_PROXY, c->http_proxy);
-  }
 
 #ifdef DEBUG
   syslog(LOG_ERR, "%s(stns)[L%d] before request http request: %s", __func__, __LINE__, url);
@@ -354,11 +360,13 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
 #ifdef DEBUG
   syslog(LOG_ERR, "%s(stns)[L%d] before free", __func__, __LINE__);
 #endif
-  free(auth);
-  free(in_headers);
+  if (!c->use_cached) {
+    free(auth);
+    free(in_headers);
+    curl_slist_free_all(headers);
+  }
   free(url);
   curl_easy_cleanup(curl);
-  curl_slist_free_all(headers);
 #ifdef DEBUG
   syslog(LOG_ERR, "%s(stns)[L%d] after free", __func__, __LINE__);
 #endif
