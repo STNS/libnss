@@ -38,7 +38,7 @@ ID_QUERY_AVAILABLE(group, low, >)
 
 static void stns_force_create_cache_dir(stns_conf_t *c)
 {
-  if (c->cache && geteuid() == 0) {
+  if (c->cache && geteuid() == 0 && !c->use_cached) {
     struct stat statBuf;
 
     char path[MAXBUF];
@@ -523,7 +523,7 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
   syslog(LOG_ERR, "%s(stns)[L%d] after free", __func__, __LINE__);
 #endif
 
-  if (c->cache) {
+  if (c->cache && !c->use_cached) {
     struct stat statbuf;
     if (stat(fpath, &statbuf) == 0 && statbuf.st_uid == geteuid()) {
       unsigned long now  = time(NULL);
@@ -553,7 +553,7 @@ request:
   if (!stns_request_available(STNS_LOCK_FILE, c))
     return CURLE_COULDNT_CONNECT;
 
-  if (c->cache) {
+  if (c->cache && !c->use_cached) {
     pthread_create(&pthread, NULL, &delete_cache_files, (void *)c);
   }
 
@@ -580,7 +580,7 @@ request:
     stns_make_lockfile(STNS_LOCK_FILE);
   }
 
-  if (c->cache) {
+  if (c->cache && !c->use_cached) {
     pthread_join(pthread, NULL);
     if (pthread_mutex_retrylock(&delete_mutex) == 0) {
       stns_export_file(dpath, fpath, res->data);
