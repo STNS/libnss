@@ -20,15 +20,17 @@ BINSYMDIR=$(PREFIX)/local/bin/
 BUILD=tmp/libs
 CRITERION_VERSION=2.3.2
 SHUNIT_VERSION=2.1.6
-CURL_VERSION=7.64.0
-SOURCES=Makefile stns.h stns.c stns*.c stns*.h toml.h toml.c parson.h parson.c stns.conf.example test libstns.map
-DIST ?= unknown
+CURL_VERSION=7.71.1
+SOURCES=Makefile stns.h stns.c stns*.c stns*.h toml.h toml.c parson.h parson.c stns.conf.example test libstns.map DIST ?= unknown
 STNSD_VERSION=0.0.1
 
 default: build
 ci: curl test integration
 test: testdev ## Test with dependencies installation
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Testing$(RESET)"
+	mkdir -p /etc/stns/client/
+	echo 'api_endpoint = "https://httpbin.org"' > /etc/stns/client/stns.conf
+	service cache-stnsd restart
 	$(CC) -g3 -fsanitize=address -O0 -fno-omit-frame-pointer -I/usr/local/curl/include \
 	  stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c stns_test.c stns_group_test.c stns_shadow_test.c stns_passwd_test.c \
 		/usr/local/curl/lib/libcurl.a \
@@ -159,7 +161,7 @@ integration: testdev build install ## Run integration test
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Integration Testing$(RESET)"
 	mkdir -p /etc/stns/client
 	mkdir -p /etc/stns/server
-	cp test/integration_client.conf /etc/stns/client/stns.conf
+	cp test/integration_client.conf /etc/stns/client/stns.conf && service cache-stnsd restart
 	cp test/integration_server.conf /etc/stns/server/stns.conf && service stns restart
 	bash -l -c "while ! nc -vz -w 1 127.0.0.1 1104 > /dev/null 2>&1; do sleep 1; echo 'sleeping'; done"
 	test -d /usr/lib/x86_64-linux-gnu && ln -sf /usr/lib/libnss_stns.so.2.0 /usr/lib/x86_64-linux-gnu/libnss_stns.so.2.0 || true
@@ -242,16 +244,23 @@ docker:
 	docker rm -f libnss-stns | true
 	docker build -f dockerfiles/Dockerfile -t libnss_develop .
 	docker run --privileged -d --name libnss-stns -v "`pwd`":/stns -it libnss_develop /sbin/init
+login: docker
 	docker exec -it libnss-stns /bin/bash
+
+test_on_docker: docker
+	docker exec -it libnss-stns make test
+	docker exec -it libnss-stns make integration
 
 github_release: ## Create some distribution packages
 	ghr -u STNS --replace v$(VERSION) builds/
 
 stnsd:
-	(dpkg -l |grep stnsd) || curl -L -O https://github.com/STNS/cache-stnsd/releases/download/v$(STNSD_VERSION)/cache-stnsd_$(STNSD_VERSION)-1_amd64.xenial.deb
-	(dpkg -l |grep stnsd) || dpkg -i cache-stnsd_$(STNSD_VERSION)-1_amd64.xenial.deb
-	mkdir -p /etc/stns/client/
-	echo 'api_endpoint = "https://httpbin.org"' > /etc/stns/client/stns.conf
-	service stnsd start
+	! test -e /etc/lsb-release || (! (dpkg -l |grep stnsd) && \
+	  curl -s -L -O https://github.com/STNS/cache-stnsd/releases/download/v$(STNSD_VERSION)/cache-stnsd_$(STNSD_VERSION)-1_amd64.xenial.deb && \
+	  dpkg -i cache-stnsd_$(STNSD_VERSION)-1_amd64.xenial.deb) | true
+	! test -e /etc/redhat-release || (! (rpm -qa |grep stnsd) && \
+	  curl -s -L -O https://github.com/STNS/cache-stnsd/releases/download/v$(STNSD_VERSION)/cache-stnsd-$(STNSD_VERSION)-1.x86_64.el7.rpm && \
+	  rpm -ivh cache-stnsd-$(STNSD_VERSION)-1.x86_64.el7.rpm) | true
+	service cache-stnsd start
 
 .PHONY: test testdev build

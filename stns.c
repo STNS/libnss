@@ -59,7 +59,7 @@ int stns_load_config(char *filename, stns_conf_t *c)
 
   GET_TOML_BYKEY(query_wrapper, toml_rtos, NULL, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(chain_ssh_wrapper, toml_rtos, NULL, TOML_NULL_OR_INT);
-  GET_TOML_BYKEY(unix_socket, toml_rtos, "/var/run/stnsd.sock", TOML_STR);
+  GET_TOML_BYKEY(unix_socket, toml_rtos, "/var/run/cache-stnsd.sock", TOML_STR);
   GET_TOML_BYKEY(request_timeout, toml_rtoi, 10, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(request_retry, toml_rtoi, 3, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(request_locktime, toml_rtoi, 60, TOML_NULL_OR_INT);

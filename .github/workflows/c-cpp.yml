@@ -8,12 +8,8 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
-    - name: make  test
-      run: make test
-    - name: make integration
-      run: make integration
+    - name: test
+      run: make test_on_docker
