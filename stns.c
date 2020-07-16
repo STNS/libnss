@@ -42,7 +42,7 @@ static void stns_force_create_cache_dir(stns_conf_t *c)
     struct stat statBuf;
 
     char path[MAXBUF];
-    sprintf(path, "%s", c->cache_dir);
+    snprintf(path, sizeof(path), "%s", c->cache_dir);
     mode_t um = {0};
     um        = umask(0);
     if (stat(path, &statBuf) != 0) {
@@ -257,7 +257,7 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
   CURL *curl;
   CURLcode result;
   struct curl_slist *headers = NULL;
-
+  size_t len;
 #ifdef DEBUG
   syslog(LOG_ERR, "%s(stns)[L%d] send http request: %s", __func__, __LINE__, url);
 #endif
@@ -268,14 +268,16 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
 
   if (!c->use_cached) {
     if (c->auth_token != NULL) {
-      auth = (char *)malloc(strlen(c->auth_token) + 22);
-      sprintf(auth, "Authorization: token %s", c->auth_token);
+      len  = strlen(c->auth_token) + 22;
+      auth = (char *)malloc(len);
+      snprintf(auth, len, "Authorization: token %s", c->auth_token);
     } else {
       auth = NULL;
     }
 
+    len = strlen(c->api_endpoint) + strlen(path) + 2;
     url = (char *)malloc(strlen(c->api_endpoint) + strlen(path) + 2);
-    sprintf(url, "%s/%s", c->api_endpoint, path);
+    snprintf(url, len, "%s/%s", c->api_endpoint, path);
 
     if (auth != NULL) {
       headers = curl_slist_append(headers, auth);
@@ -291,7 +293,8 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
         else
           in_headers = (char *)realloc(in_headers, size);
 
-        sprintf(in_headers, "%s: %s", c->http_headers->headers[i].key, c->http_headers->headers[i].value);
+        snprintf(in_headers, strlen(c->http_headers->headers[i].key) + strlen(c->http_headers->headers[i].value) + 3,
+                 "%s: %s", c->http_headers->headers[i].key, c->http_headers->headers[i].value);
         headers = curl_slist_append(headers, in_headers);
       }
     }
@@ -322,7 +325,7 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
   } else {
     curl_easy_setopt(curl, CURLOPT_UNIX_SOCKET_PATH, c->unix_socket);
     url = (char *)malloc(strlen("http://unix") + strlen(path) + 2);
-    sprintf(url, "%s/%s", "http://unix", path);
+    snprintf(url, strlen("http://unix") + strlen(path) + 2, "%s/%s", "http://unix", path);
   }
   curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
@@ -465,7 +468,7 @@ static void *delete_cache_files(void *data)
   struct stat statbuf;
   unsigned long now = time(NULL);
   char dir[MAXBUF];
-  sprintf(dir, "%s/%d", c->cache_dir, geteuid());
+  snprintf(dir, sizeof(dir), "%s/%d", c->cache_dir, geteuid());
 
   if (pthread_mutex_retrylock(&delete_mutex) != 0)
     return NULL;
@@ -479,7 +482,7 @@ static void *delete_cache_files(void *data)
   char *buf = malloc(1);
   while ((ent = readdir(dp)) != NULL) {
     buf = (char *)realloc(buf, strlen(dir) + strlen(ent->d_name) + 2);
-    sprintf(buf, "%s/%s", dir, ent->d_name);
+    snprintf(buf, strlen(dir) + strlen(ent->d_name) + 2, "%s/%s", dir, ent->d_name);
 
     if (stat(buf, &statbuf) == 0 && (statbuf.st_uid == geteuid() || geteuid() == 0)) {
       unsigned long diff = now - statbuf.st_mtime;
@@ -521,8 +524,8 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
   char *base = curl_escape(path, strlen(path));
   char dpath[MAXBUF];
   char fpath[MAXBUF];
-  sprintf(dpath, "%s/%d", c->cache_dir, geteuid());
-  sprintf(fpath, "%s/%s", dpath, base);
+  snprintf(dpath, sizeof(dpath), "%s/%d", c->cache_dir, geteuid());
+  snprintf(fpath, sizeof(fpath), "%s/%s", dpath, base);
 #ifdef DEBUG
   syslog(LOG_ERR, "%s(stns)[L%d] before free", __func__, __LINE__);
 #endif
@@ -638,7 +641,7 @@ int stns_exec_cmd(char *cmd, char *arg, stns_response_t *r)
 #endif
   if (arg != NULL) {
     c = malloc(strlen(cmd) + strlen(arg) + 2);
-    sprintf(c, "%s %s", cmd, arg);
+    snprintf(c, strlen(cmd) + strlen(arg) + 2, "%s %s", cmd, arg);
   } else {
     c = cmd;
   }

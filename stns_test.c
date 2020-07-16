@@ -95,7 +95,7 @@ Test(stns_request, http_request)
   stns_response_t r;
   stns_request(&c, "user-agent", &r);
 
-  sprintf(expect_body, "{\n  \"user-agent\": \"%s\"\n}\n", STNS_VERSION_WITH_NAME);
+  snprintf(expect_body, sizeof(expect_body), "{\n  \"user-agent\": \"%s\"\n}\n", STNS_VERSION_WITH_NAME);
   cr_assert_str_eq(r.data, expect_body);
 }
 
@@ -105,7 +105,7 @@ Test(stns_request, http_cache)
   stns_conf_t c = test_conf();
   stns_response_t r;
   char path[MAXBUF];
-  sprintf(path, "/var/cache/stns/%d/%s", geteuid(), "get%3Fexample");
+  snprintf(path, sizeof(path), "/var/cache/stns/%d/%s", geteuid(), "get%3Fexample");
 
   c.cache     = 1;
   c.cache_ttl = 1;
@@ -235,7 +235,7 @@ Test(stns_request, http_request_with_cached)
   stns_response_t r;
   stns_request(&c, "user-agent", &r);
 
-  sprintf(expect_body, "{\n  \"user-agent\": \"%s\"\n}\n", "cache-stnsd/0.0.1");
+  snprintf(expect_body, sizeof(expect_body), "{\n  \"user-agent\": \"%s\"\n}\n", "cache-stnsd/0.0.1");
   cr_assert_str_eq(r.data, expect_body);
 }
 

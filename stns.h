@@ -1,6 +1,5 @@
 #ifndef STNS_H
 #define STNS_H
-
 #include <curl/curl.h>
 #include <errno.h>
 #include <stdint.h>
@@ -142,7 +141,7 @@ extern void set_group_lowest_id(int);
     if (stns_load_config(STNS_CONFIG_FILE, &c) != 0)                                                                   \
       return NSS_STATUS_UNAVAIL;                                                                                       \
     query_available;                                                                                                   \
-    sprintf(url, format, value id_shift);                                                                              \
+    snprintf(url, sizeof(url), format, value id_shift);                                                                \
     curl_result = stns_request(&c, url, &r);                                                                           \
                                                                                                                        \
     if (curl_result != CURLE_OK) {                                                                                     \
