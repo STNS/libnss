@@ -8,13 +8,12 @@
 #include <unistd.h>
 #include <dirent.h>
 
-pthread_mutex_t user_mutex   = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t group_mutex  = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t delete_mutex = PTHREAD_MUTEX_INITIALIZER;
-int highest_user_id          = 0;
-int lowest_user_id           = 0;
-int highest_group_id         = 0;
-int lowest_group_id          = 0;
+pthread_mutex_t user_mutex  = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t group_mutex = PTHREAD_MUTEX_INITIALIZER;
+int highest_user_id         = 0;
+int lowest_user_id          = 0;
+int highest_group_id        = 0;
+int lowest_group_id         = 0;
 
 SET_GET_HIGH_LOW_ID(highest, user);
 SET_GET_HIGH_LOW_ID(lowest, user);
@@ -251,7 +250,7 @@ static size_t response_callback(void *buffer, size_t size, size_t nmemb, void *u
 // base https://github.com/linyows/octopass/blob/master/octopass.c
 static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *res)
 {
-  char *auth;
+  char *auth       = NULL;
   char *in_headers = NULL;
   char *url;
   CURL *curl;
@@ -364,10 +363,15 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
   syslog(LOG_ERR, "%s(stns)[L%d] before free", __func__, __LINE__);
 #endif
   if (!c->use_cached) {
-    free(auth);
-    free(in_headers);
+    if (c->auth_token != NULL) {
+      free(auth);
+    }
+    if (c->http_headers != NULL) {
+      free(in_headers);
+    }
     curl_slist_free_all(headers);
   }
+
   free(url);
   curl_easy_cleanup(curl);
 #ifdef DEBUG
@@ -460,9 +464,8 @@ int stns_import_file(char *file, stns_response_t *res)
   return 1;
 }
 
-static void *delete_cache_files(void *data)
+static void delete_cache_files(stns_conf_t *c)
 {
-  stns_conf_t *c = (stns_conf_t *)data;
   DIR *dp;
   struct dirent *ent;
   struct stat statbuf;
@@ -470,13 +473,8 @@ static void *delete_cache_files(void *data)
   char dir[MAXBUF];
   snprintf(dir, sizeof(dir), "%s/%d", c->cache_dir, geteuid());
 
-  if (pthread_mutex_retrylock(&delete_mutex) != 0)
-    return NULL;
   if ((dp = opendir(dir)) == NULL) {
-    syslog(LOG_ERR, "%s(stns)[L%d] cannot open %s: %s", __func__, __LINE__, dir, strerror(errno));
-    pthread_mutex_unlock(&delete_mutex);
-    syslog(LOG_ERR, "%s(stns)[L%d] after cannot open %s: %s", __func__, __LINE__, dir, strerror(errno));
-    return NULL;
+    return;
   }
 
   char *buf = malloc(1);
@@ -501,17 +499,15 @@ static void *delete_cache_files(void *data)
 #endif
   free(buf);
   closedir(dp);
-  pthread_mutex_unlock(&delete_mutex);
 #ifdef DEBUG
   syslog(LOG_ERR, "%s(stns)[L%d] after free", __func__, __LINE__);
 #endif
-  return NULL;
+  return;
 }
 
 int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
 {
   CURLcode result;
-  pthread_t pthread;
   int retry_count  = c->request_retry;
   res->data        = (char *)malloc(sizeof(char));
   res->size        = 0;
@@ -522,10 +518,10 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
   }
 
   char *base = curl_escape(path, strlen(path));
-  char dpath[MAXBUF];
-  char fpath[MAXBUF];
-  snprintf(dpath, sizeof(dpath), "%s/%d", c->cache_dir, geteuid());
-  snprintf(fpath, sizeof(fpath), "%s/%s", dpath, base);
+  char dpath[MAXBUF + 1];
+  char fpath[MAXBUF * 2];
+  snprintf(dpath, MAXBUF, "%s/%d", c->cache_dir, geteuid());
+  snprintf(fpath, MAXBUF, "%s/%s", dpath, base);
 #ifdef DEBUG
   syslog(LOG_ERR, "%s(stns)[L%d] before free", __func__, __LINE__);
 #endif
@@ -547,15 +543,13 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
           return CURLE_HTTP_RETURNED_ERROR;
         }
 
-        if (pthread_mutex_retrylock(&delete_mutex) != 0)
-          goto request;
         if (!stns_import_file(fpath, res)) {
-          pthread_mutex_unlock(&delete_mutex);
           goto request;
         }
-        pthread_mutex_unlock(&delete_mutex);
         res->size = strlen(res->data);
         return CURLE_OK;
+      } else {
+        delete_cache_files(c);
       }
     }
   }
@@ -563,10 +557,6 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
 request:
   if (!stns_request_available(STNS_LOCK_FILE, c))
     return CURLE_COULDNT_CONNECT;
-
-  if (c->cache && !c->use_cached) {
-    pthread_create(&pthread, NULL, &delete_cache_files, (void *)c);
-  }
 
   if (c->query_wrapper == NULL) {
     result = inner_http_request(c, path, res);
@@ -592,11 +582,7 @@ request:
   }
 
   if (c->cache && !c->use_cached) {
-    pthread_join(pthread, NULL);
-    if (pthread_mutex_retrylock(&delete_mutex) == 0) {
-      stns_export_file(dpath, fpath, res->data);
-      pthread_mutex_unlock(&delete_mutex);
-    }
+    stns_export_file(dpath, fpath, res->data);
   }
   return result;
 }

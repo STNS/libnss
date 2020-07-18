@@ -1,6 +1,6 @@
 # The base of this code is https://github.com/pyama86/stns/blob/master/Makefile
 CC=gcc
-CFLAGS=-Wall -Wstrict-prototypes -Werror -fPIC -std=c99 -D_GNU_SOURCE -I/usr/local/curl/include
+CFLAGS=-Os -Wall -Wstrict-prototypes -Werror -fPIC -std=c99 -D_GNU_SOURCE -I$(CURL_DIR)/include
 LDFLAGS=-Wl,--version-script,libstns.map
 
 LIBRARY=libnss_stns.so.2.0
@@ -17,14 +17,28 @@ endif
 BINDIR=$(PREFIX)/lib/stns
 BINSYMDIR=$(PREFIX)/local/bin/
 
-BUILD=tmp/libs
+
+LIBS_CFLAGS=-Os -fPIC
+$(eval CURL_LDFLAGS := "-L$(shell if `test -e /etc/redhat-release`; then echo "/usr/lib64";else echo "/usr/lib/x86_64-linux-gnu";fi) $(LIBS_CFLAGS)")
 CRITERION_VERSION=2.3.2
 SHUNIT_VERSION=2.1.6
 CURL_VERSION=7.71.1
+OPENSSL_VERSION=1.1.1g
+ZLIB_VERSION=1.2.11
+
 SOURCES=Makefile stns.h stns.c stns*.c stns*.h toml.h toml.c parson.h parson.c stns.conf.example test libstns.map
 DIST ?= unknown
 STNSD_VERSION=0.0.1
+BUILD=tmp/libs
 
+DIST_DIR:=$(shell echo "`pwd`/tmp/$(DIST)")
+OPENSSL_DIR:=$(DIST_DIR)/openssl-$(OPENSSL_VERSION)
+CURL_DIR:=$(DIST_DIR)/curl-$(CURL_VERSION)
+ZLIB_DIR:=$(DIST_DIR)/zlib-$(ZLIB_VERSION)
+
+STATIC_LIBS=$(CURL_DIR)/lib/libcurl.a $(OPENSSL_DIR)/lib/libssl.a  $(OPENSSL_DIR)/lib/libcrypto.a $(ZLIB_DIR)/lib/libz.a
+
+MAKE=make -j4
 default: build
 ci: curl test integration
 test: testdev ## Test with dependencies installation
@@ -32,14 +46,11 @@ test: testdev ## Test with dependencies installation
 	mkdir -p /etc/stns/client/
 	echo 'api_endpoint = "https://httpbin.org"' > /etc/stns/client/stns.conf
 	service cache-stnsd restart
-	$(CC) -g3 -fsanitize=address -O0 -fno-omit-frame-pointer -I/usr/local/curl/include \
+	$(CC) -g3 -fsanitize=address -O0 -fno-omit-frame-pointer -I$(CURL_DIR)/include \
 	  stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c stns_test.c stns_group_test.c stns_shadow_test.c stns_passwd_test.c \
-		/usr/local/curl/lib/libcurl.a \
+		$(STATIC_LIBS) \
 		-lcriterion \
 		-lpthread \
-		-lssl \
-		-lcrypto \
-		-lz \
 		-ldl \
 		-lrt \
 		-o $(BUILD)/test
@@ -48,15 +59,30 @@ test: testdev ## Test with dependencies installation
 build_dir: ## Create directory for build
 	test -d $(BUILD) || mkdir -p $(BUILD)
 
-local_build: curl build
-curl: build_dir
+zlib:
+	test -d $(BUILD)/zlib-$(ZLIB_VERSION) || (curl -sL https://zlib.net/zlib-$(ZLIB_VERSION).tar.xz -o $(BUILD)/zlib-$(ZLIB_VERSION).tar.xz && cd $(BUILD) && tar xf zlib-$(ZLIB_VERSION).tar.xz)
+	test -f $(ZLIB_DIR)/lib/libz.a || (cd $(BUILD)/zlib-$(ZLIB_VERSION) && CFLAGS='$(LIBS_CFLAGS)' ./configure \
+	  --prefix=$(ZLIB_DIR) \
+	&& $(MAKE) clean && $(MAKE) && $(MAKE) install)
+
+openssl: zlib
+	test -d $(BUILD)/openssl-$(OPENSSL_VERSION) || (curl -sL https://www.openssl.org/source/openssl-$(OPENSSL_VERSION).tar.gz -o $(BUILD)/openssl-$(OPENSSL_VERSION).tar.gz && cd $(BUILD) && tar xf openssl-$(OPENSSL_VERSION).tar.gz)
+	test -f $(OPENSSL_DIR)/lib/libssl.a || (cd $(BUILD)/openssl-$(OPENSSL_VERSION) && CFLAGS='$(LIBS_CFLAGS)' ./config \
+	  --prefix=$(OPENSSL_DIR) \
+	  --openssldir=$(OPENSSL_DIR) \
+	  -Wl,--enable-new-dtags \
+	&& $(MAKE) clean && $(MAKE) depend && $(MAKE) && $(MAKE) install)
+
+curl: build_dir openssl
 	test -d $(BUILD)/curl-$(CURL_VERSION) || (curl -sL https://curl.haxx.se/download/curl-$(CURL_VERSION).tar.gz -o $(BUILD)/curl-$(CURL_VERSION).tar.gz && cd $(BUILD) && tar xf curl-$(CURL_VERSION).tar.gz)
-	test -f /usr/local/curl/lib/libcurl.a || (cd $(BUILD)/curl-$(CURL_VERSION) && LDFLAGS=-L/usr/lib/x86_64-linux-gnu ./configure \
-	  --with-ssl \
+	test -f $(CURL_DIR)/lib/libcurl.a || (cd $(BUILD)/curl-$(CURL_VERSION) && \
+	  LDFLAGS=$(CURL_LDFLAGS) ./configure \
+	  --with-ssl=$(OPENSSL_DIR) \
+	  --with-zlib=$(ZLIB_DIR) \
 	  --enable-libcurl-option \
 	  --disable-shared \
 	  --enable-static \
-	  --prefix=/usr/local/curl \
+	  --prefix=$(CURL_DIR) \
 	  --disable-ldap \
 	  --disable-sspi \
 	  --without-librtmp \
@@ -71,8 +97,7 @@ curl: build_dir
 	  --disable-smtp \
 	  --disable-gopher \
 	  --disable-smb \
-	  --without-libidn && make && make install)
-
+	  --without-libidn && $(MAKE) clean && $(MAKE) && $(MAKE) install)
 
 criterion:  ## Installing dependencies for development
 	test -f $(BUILD)/criterion.tar.bz2 || curl -sL https://github.com/Snaipe/Criterion/releases/download/v$(CRITERION_VERSION)/criterion-v$(CRITERION_VERSION)-linux-x86_64.tar.bz2 -o $(BUILD)/criterion.tar.bz2
@@ -84,16 +109,16 @@ criterion:  ## Installing dependencies for development
 
 debug:
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Testing$(RESET)"
-	$(CC) -g -I/usr/local/curl/include \
+	$(CC) -g -I$(CURL_DIR)/include \
 	  test/debug.c stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c \
-		-lcurl -lpthread -o $(BUILD)/debug && \
+		$(STATIC_LIBS) \
+		 -lpthread -ldl -o $(BUILD)/debug && \
 		$(BUILD)/debug && valgrind --leak-check=full tmp/libs/debug
 
 testdev: build_dir curl criterion stnsd  ## Test without dependencies installation
 
 build: nss_build key_wrapper_build
-build_static: nss_build_static key_wrapper_build
-nss_build: build_dir ## Build nss_stns
+nss_build : build_dir ## Build nss_stns
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Building nss_stns$(RESET)"
 	$(CC) $(CFLAGS) -c parson.c -o $(BUILD)/parson.o
 	$(CC) $(CFLAGS) -c toml.c -o $(BUILD)/toml.o
@@ -108,34 +133,8 @@ nss_build: build_dir ## Build nss_stns
 		$(BUILD)/toml.o \
 		$(BUILD)/stns_group.o \
 		$(BUILD)/stns_shadow.o \
-		-lcurl \
+		$(STATIC_LIBS) \
 		-lpthread \
-		-lssl \
-		-lcrypto \
-		-lz \
-		-ldl \
-		-lrt
-
-nss_build_static: build_dir ## Build nss_stns
-	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Building nss_stns$(RESET)"
-	$(CC) $(CFLAGS) -c parson.c -o $(BUILD)/parson.o
-	$(CC) $(CFLAGS) -c toml.c -o $(BUILD)/toml.o
-	$(CC) $(CFLAGS) -c stns_passwd.c -o $(BUILD)/stns_passwd.o
-	$(CC) $(CFLAGS) -c stns_group.c -o $(BUILD)/stns_group.o
-	$(CC) $(CFLAGS) -c stns_shadow.c -o $(BUILD)/stns_shadow.o
-	$(CC) $(CFLAGS) -c stns.c -o $(BUILD)/stns.o
-	$(CC) $(LDFLAGS) -shared $(LD_SONAME) -o $(BUILD)/$(LIBRARY) \
-		$(BUILD)/stns.o \
-		$(BUILD)/stns_passwd.o \
-		$(BUILD)/parson.o \
-		$(BUILD)/toml.o \
-		$(BUILD)/stns_group.o \
-		$(BUILD)/stns_shadow.o \
-		/usr/local/curl/lib/libcurl.a \
-		-lpthread \
-		-lssl \
-		-lcrypto \
-		-lz \
 		-ldl \
 		-lrt
 
@@ -150,11 +149,8 @@ key_wrapper_build: build_dir ## Build nss_stns
 		$(BUILD)/stns_key_wrapper.o \
 		$(BUILD)/parson.o \
 		$(BUILD)/toml.o \
-		/usr/local/curl/lib/libcurl.a \
+		$(STATIC_LIBS) \
 		-lpthread \
-		-lssl \
-		-lcrypto \
-		-lz \
 		-ldl \
 		-lrt
 
@@ -191,14 +187,14 @@ install_key_wrapper: ## Install only key wrapper
 
 source_for_rpm: ## Create source for RPM
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Distributing$(RESET)"
-	rm -rf tmp.$(DIST) libnss-stns-v2-$(VERSION).tar.gz
-	mkdir -p tmp.$(DIST)/libnss-stns-v2-$(VERSION)
-	cp -r $(SOURCES) tmp.$(DIST)/libnss-stns-v2-$(VERSION)
-	cd tmp.$(DIST) && \
+	rm -rf $(DIST_DIR) libnss-stns-v2-$(VERSION).tar.gz
+	mkdir -p $(DIST_DIR)/libnss-stns-v2-$(VERSION)
+	cp -r $(SOURCES) $(DIST_DIR)/libnss-stns-v2-$(VERSION)
+	cd $(DIST_DIR) && \
 		tar cf libnss-stns-v2-$(VERSION).tar libnss-stns-v2-$(VERSION) && \
 		gzip -9 libnss-stns-v2-$(VERSION).tar
-	cp tmp.$(DIST)/libnss-stns-v2-$(VERSION).tar.gz ./builds
-	rm -rf tmp.$(DIST)
+	cp $(DIST_DIR)/libnss-stns-v2-$(VERSION).tar.gz ./builds
+	rm -rf $(DIST_DIR)
 
 rpm: source_for_rpm curl ## Packaging for RPM
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Packaging for RPM$(RESET)"
@@ -209,17 +205,17 @@ rpm: source_for_rpm curl ## Packaging for RPM
 
 source_for_deb: ## Create source for DEB
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Distributing$(RESET)"
-	rm -rf tmp.$(DIST) libnss-stns-v2_$(VERSION).orig.tar.xz
-	mkdir -p tmp.$(DIST)/libnss-stns-v2-$(VERSION)
-	cp -r $(SOURCES) tmp.$(DIST)/libnss-stns-v2-$(VERSION)
-	cd tmp.$(DIST) && \
+	rm -rf $(DIST_DIR) libns
+	mkdir -p $(DIST_DIR)/libnss-stns-v2-$(VERSION)
+	cp -r $(SOURCES) $(DIST_DIR)/libnss-stns-v2-$(VERSION)
+	cd $(DIST_DIR) && \
 		tar cf libnss-stns-v2_$(VERSION).tar libnss-stns-v2-$(VERSION) && \
 		xz -v libnss-stns-v2_$(VERSION).tar
-	mv tmp.$(DIST)/libnss-stns-v2_$(VERSION).tar.xz tmp.$(DIST)/libnss-stns-v2_$(VERSION).orig.tar.xz
+	mv $(DIST_DIR)/libnss-stns-v2_$(VERSION).tar.xz $(DIST_DIR)/libnss-stns-v2_$(VERSION).orig.tar.xz
 
 deb: source_for_deb curl ## Packaging for DEB
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Packaging for DEB$(RESET)"
-	cd tmp.$(DIST) && \
+	cd $(DIST_DIR) && \
 		tar xf libnss-stns-v2_$(VERSION).orig.tar.xz && \
 		cd libnss-stns-v2-$(VERSION) && \
 		dh_make --single --createorig -y && \
@@ -227,10 +223,10 @@ deb: source_for_deb curl ## Packaging for DEB
 		cp -v /stns/debian/* debian/ && \
 		sed -i -e 's/xenial/$(DIST)/g' debian/changelog && \
 		debuild -uc -us
-	cd tmp.$(DIST) && \
+	cd $(DIST_DIR) && \
 		find . -name "*.deb" | sed -e 's/\(\(.*libnss-stns-v2.*\).deb\)/mv \1 \2.$(DIST).deb/g' | sh && \
 		cp *.deb /stns/builds
-	rm -rf tmp.$(DIST)
+	rm -rf $(DIST_DIR)
 pkg: ## Create some distribution packages
 	rm -rf builds && mkdir builds
 	docker-compose run --rm -v `pwd`:/stns nss_centos6
@@ -247,7 +243,7 @@ changelog:
 docker:
 	docker rm -f libnss-stns | true
 	docker build -f dockerfiles/Dockerfile -t libnss_develop .
-	docker run --privileged -d --name libnss-stns -v "`pwd`":/stns -it libnss_develop /sbin/init
+	docker run --privileged -d -e DIST=el7 --name libnss-stns -v "`pwd`":/stns -it libnss_develop /sbin/init
 login: docker
 	docker exec -it libnss-stns /bin/bash
 

@@ -8,11 +8,11 @@ Source:           %{name}-%{version}.tar.gz
 Group:            System Environment/Base
 Packager:         pyama86 <www.kazu.com@gmail.com>
 %if 0%{?rhel} < 7
-Requires:         glibc openssl cache-stnsd
-BuildRequires:    gcc make openssl-devel
+Requires:         glibc cache-stnsd
+BuildRequires:    gcc make
 %else
-Requires:         glibc openssl-libs cache-stnsd
-BuildRequires:    gcc make openssl-devel
+Requires:         glibc cache-stnsd
+BuildRequires:    gcc make
 %endif
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:        i386, x86_64
@@ -26,7 +26,7 @@ We provide name resolution of Linux user group using STNS.
 %setup -q -n %{name}-%{version}
 
 %build
-make build_static
+make build
 
 %install
 %{__rm} -rf %{buildroot}

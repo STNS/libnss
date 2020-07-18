@@ -107,13 +107,21 @@ Test(stns_request, http_cache)
   char path[MAXBUF];
   snprintf(path, sizeof(path), "/var/cache/stns/%d/%s", geteuid(), "get%3Fexample");
 
-  c.cache     = 1;
-  c.cache_ttl = 1;
+  unlink(path);
+  c.cache              = 1;
+  c.cache_ttl          = 1;
+  c.negative_cache_ttl = 1;
+  c.use_cached         = 0;
+
+  stns_request(&c, "get?notfound", &r);
+  cr_assert_eq(stat(path, &st), -1);
+  free(r.data);
 
   stns_request(&c, "get?example", &r);
+  free(r.data);
   cr_assert_eq(stat(path, &st), 0);
   sleep(2);
-  // deleted by thread
+
   stns_request(&c, "get?notfound", &r);
   cr_assert_eq(stat(path, &st), -1);
   free(r.data);
