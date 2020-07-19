@@ -83,6 +83,7 @@ curl: build_dir openssl
 	test -f $(CURL_DIR)/lib/libcurl.a || (cd $(SRC_DIR)/curl-$(CURL_VERSION) && (make clean |true) && \
 	  LDFLAGS=$(CURL_LDFLAGS) ./configure \
 	  --with-ssl=$(OPENSSL_DIR) \
+	  --with-libssl-prefix=$(OPENSSL_DIR) \
 	  --with-zlib=$(ZLIB_DIR) \
 	  --enable-libcurl-option \
 	  --disable-shared \
@@ -251,7 +252,7 @@ changelog:
 docker:
 	docker rm -f libnss-stns | true
 	docker build -f dockerfiles/Dockerfile -t libnss_develop .
-	docker run --privileged -d -e DIST=el7 --name libnss-stns -v "`pwd`":/stns -it libnss_develop /sbin/init
+	docker run --privileged -d -e DIST=$(DIST) --name libnss-stns -v "`pwd`":/stns -it libnss_develop /sbin/init
 login: docker
 	docker exec -it libnss-stns /bin/bash
 
