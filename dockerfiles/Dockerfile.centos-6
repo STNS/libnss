@@ -1,8 +1,7 @@
 FROM centos:6
 MAINTAINER pyama86 <www.kazu.com@gmail.com>
 
-RUN yum install -y glibc gcc make bzip2 unzip rpmdevtools mock epel-release && \
-    yum install -y clang
+RUN yum install -y glibc gcc make bzip2 unzip rpmdevtools mock epel-release clang
 
 RUN mkdir -p /root/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
 RUN sed -i "s;%_build_name_fmt.*;%_build_name_fmt\t%%{ARCH}/%%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.el6.rpm;" /usr/lib/rpm/macros

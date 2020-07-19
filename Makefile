@@ -29,9 +29,10 @@ ZLIB_VERSION=1.2.11
 SOURCES=Makefile stns.h stns.c stns*.c stns*.h toml.h toml.c parson.h parson.c stns.conf.example test libstns.map
 DIST ?= unknown
 STNSD_VERSION=0.0.1
-BUILD=tmp/libs
 
 DIST_DIR:=$(shell echo "`pwd`/tmp/$(DIST)")
+#SRC_DIR:=$(shell echo "`pwd`/tmp/$(DIST)/src")
+SRC_DIR:=$(shell echo "`pwd`/tmp/src")
 OPENSSL_DIR:=$(DIST_DIR)/openssl-$(OPENSSL_VERSION)
 CURL_DIR:=$(DIST_DIR)/curl-$(CURL_VERSION)
 ZLIB_DIR:=$(DIST_DIR)/zlib-$(ZLIB_VERSION)
@@ -53,29 +54,32 @@ test: testdev ## Test with dependencies installation
 		-lpthread \
 		-ldl \
 		-lrt \
-		-o $(BUILD)/test
-		$(BUILD)/test --verbose
+		-o $(DIST_DIR)/test
+		$(DIST_DIR)/test --verbose
 
 build_dir: ## Create directory for build
-	test -d $(BUILD) || mkdir -p $(BUILD)
+	test -d $(DIST_DIR) || mkdir -p $(DIST_DIR)
+	test -d $(SRC_DIR) || mkdir -p $(SRC_DIR)
 
-zlib:
-	test -d $(BUILD)/zlib-$(ZLIB_VERSION) || (curl -sL https://zlib.net/zlib-$(ZLIB_VERSION).tar.xz -o $(BUILD)/zlib-$(ZLIB_VERSION).tar.xz && cd $(BUILD) && tar xf zlib-$(ZLIB_VERSION).tar.xz)
-	test -f $(ZLIB_DIR)/lib/libz.a || (cd $(BUILD)/zlib-$(ZLIB_VERSION) && CFLAGS='$(LIBS_CFLAGS)' ./configure \
+zlib:  build_dir
+	test -d $(SRC_DIR)/zlib-$(ZLIB_VERSION) || (curl -sL https://zlib.net/zlib-$(ZLIB_VERSION).tar.xz -o $(SRC_DIR)/zlib-$(ZLIB_VERSION).tar.xz && cd $(SRC_DIR) && tar xf zlib-$(ZLIB_VERSION).tar.xz)
+	test -f $(ZLIB_DIR)/lib/libz.a || (cd $(SRC_DIR)/zlib-$(ZLIB_VERSION) && CFLAGS='$(LIBS_CFLAGS)' ./configure \
 	  --prefix=$(ZLIB_DIR) \
-	&& $(MAKE) clean && $(MAKE) && $(MAKE) install)
+	&& $(MAKE) && $(MAKE) install)
 
-openssl: zlib
-	test -d $(BUILD)/openssl-$(OPENSSL_VERSION) || (curl -sL https://www.openssl.org/source/openssl-$(OPENSSL_VERSION).tar.gz -o $(BUILD)/openssl-$(OPENSSL_VERSION).tar.gz && cd $(BUILD) && tar xf openssl-$(OPENSSL_VERSION).tar.gz)
-	test -f $(OPENSSL_DIR)/lib/libssl.a || (cd $(BUILD)/openssl-$(OPENSSL_VERSION) && CFLAGS='$(LIBS_CFLAGS)' ./config \
+openssl: build_dir zlib
+	test -d $(SRC_DIR)/openssl-$(OPENSSL_VERSION) || (curl -sL https://www.openssl.org/source/openssl-$(OPENSSL_VERSION).tar.gz -o $(SRC_DIR)/openssl-$(OPENSSL_VERSION).tar.gz && cd $(SRC_DIR) && tar xf openssl-$(OPENSSL_VERSION).tar.gz)
+	test -f $(OPENSSL_DIR)/lib/libssl.a || (cd $(SRC_DIR)/openssl-$(OPENSSL_VERSION) && CFLAGS='$(LIBS_CFLAGS)' ./config \
 	  --prefix=$(OPENSSL_DIR) \
+	  no-ssl3 \
+	  no-asm \
 	  --openssldir=$(OPENSSL_DIR) \
 	  -Wl,--enable-new-dtags \
-	&& $(MAKE) clean && $(MAKE) depend && $(MAKE) && $(MAKE) install)
+	 &>> /tmp/result.txt && $(MAKE) depend &>> /tmp/result.txt && $(MAKE) && $(MAKE) install &>> /tmp/result.txt)
 
 curl: build_dir openssl
-	test -d $(BUILD)/curl-$(CURL_VERSION) || (curl -sL https://curl.haxx.se/download/curl-$(CURL_VERSION).tar.gz -o $(BUILD)/curl-$(CURL_VERSION).tar.gz && cd $(BUILD) && tar xf curl-$(CURL_VERSION).tar.gz)
-	test -f $(CURL_DIR)/lib/libcurl.a || (cd $(BUILD)/curl-$(CURL_VERSION) && \
+	test -d $(SRC_DIR)/curl-$(CURL_VERSION) || (curl -sL https://curl.haxx.se/download/curl-$(CURL_VERSION).tar.gz -o $(SRC_DIR)/curl-$(CURL_VERSION).tar.gz && cd $(SRC_DIR) && tar xf curl-$(CURL_VERSION).tar.gz)
+	test -f $(CURL_DIR)/lib/libcurl.a || (cd $(SRC_DIR)/curl-$(CURL_VERSION) && \
 	  LDFLAGS=$(CURL_LDFLAGS) ./configure \
 	  --with-ssl=$(OPENSSL_DIR) \
 	  --with-zlib=$(ZLIB_DIR) \
@@ -97,42 +101,42 @@ curl: build_dir openssl
 	  --disable-smtp \
 	  --disable-gopher \
 	  --disable-smb \
-	  --without-libidn && $(MAKE) clean && $(MAKE) && $(MAKE) install)
+	  --without-libidn && $(MAKE) && $(MAKE) install)
 
 criterion:  ## Installing dependencies for development
-	test -f $(BUILD)/criterion.tar.bz2 || curl -sL https://github.com/Snaipe/Criterion/releases/download/v$(CRITERION_VERSION)/criterion-v$(CRITERION_VERSION)-linux-x86_64.tar.bz2 -o $(BUILD)/criterion.tar.bz2
-	test -d /usr/include/criterion || cd $(BUILD); tar xf criterion.tar.bz2; cd ../
-	test -d /usr/include/criterion || (mv $(BUILD)/criterion-v$(CRITERION_VERSION)/include/criterion /usr/include/criterion && mv $(BUILD)/criterion-v$(CRITERION_VERSION)/lib/libcriterion.* $(LIBDIR)/)
-	test -f $(BUILD)/shunit2.tgz || curl -sL https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/shunit2/shunit2-$(SHUNIT_VERSION).tgz -o $(BUILD)/shunit2.tgz
-	cd $(BUILD); tar xf shunit2.tgz; cd ../
-	test -d /usr/include/shunit2 || mv $(BUILD)/shunit2-$(SHUNIT_VERSION)/ /usr/include/shunit2
+	test -f $(DIST_DIR)/criterion.tar.bz2 || curl -sL https://github.com/Snaipe/Criterion/releases/download/v$(CRITERION_VERSION)/criterion-v$(CRITERION_VERSION)-linux-x86_64.tar.bz2 -o $(DIST_DIR)/criterion.tar.bz2
+	test -d /usr/include/criterion || cd $(DIST_DIR); tar xf criterion.tar.bz2; cd ../
+	test -d /usr/include/criterion || (mv $(DIST_DIR)/criterion-v$(CRITERION_VERSION)/include/criterion /usr/include/criterion && mv $(DIST_DIR)/criterion-v$(CRITERION_VERSION)/lib/libcriterion.* $(LIBDIR)/)
+	test -f $(DIST_DIR)/shunit2.tgz || curl -sL https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/shunit2/shunit2-$(SHUNIT_VERSION).tgz -o $(DIST_DIR)/shunit2.tgz
+	cd $(DIST_DIR); tar xf shunit2.tgz; cd ../
+	test -d /usr/include/shunit2 || mv $(DIST_DIR)/shunit2-$(SHUNIT_VERSION)/ /usr/include/shunit2
 
 debug:
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Testing$(RESET)"
 	$(CC) -g -I$(CURL_DIR)/include \
 	  test/debug.c stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c \
 		$(STATIC_LIBS) \
-		 -lpthread -ldl -o $(BUILD)/debug && \
-		$(BUILD)/debug && valgrind --leak-check=full tmp/libs/debug
+		 -lpthread -ldl -o $(DIST_DIR)/debug && \
+		$(DIST_DIR)/debug && valgrind --leak-check=full tmp/libs/debug
 
 testdev: build_dir curl criterion stnsd  ## Test without dependencies installation
 
 build: nss_build key_wrapper_build
-nss_build : build_dir ## Build nss_stns
+nss_build : build_dir curl ## Build nss_stns
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Building nss_stns$(RESET)"
-	$(CC) $(CFLAGS) -c parson.c -o $(BUILD)/parson.o
-	$(CC) $(CFLAGS) -c toml.c -o $(BUILD)/toml.o
-	$(CC) $(CFLAGS) -c stns_passwd.c -o $(BUILD)/stns_passwd.o
-	$(CC) $(CFLAGS) -c stns_group.c -o $(BUILD)/stns_group.o
-	$(CC) $(CFLAGS) -c stns_shadow.c -o $(BUILD)/stns_shadow.o
-	$(CC) $(CFLAGS) -c stns.c -o $(BUILD)/stns.o
-	$(CC) $(LDFLAGS) -shared $(LD_SONAME) -o $(BUILD)/$(LIBRARY) \
-		$(BUILD)/stns.o \
-		$(BUILD)/stns_passwd.o \
-		$(BUILD)/parson.o \
-		$(BUILD)/toml.o \
-		$(BUILD)/stns_group.o \
-		$(BUILD)/stns_shadow.o \
+	$(CC) $(CFLAGS) -c parson.c -o $(DIST_DIR)/parson.o
+	$(CC) $(CFLAGS) -c toml.c -o $(DIST_DIR)/toml.o
+	$(CC) $(CFLAGS) -c stns_passwd.c -o $(DIST_DIR)/stns_passwd.o
+	$(CC) $(CFLAGS) -c stns_group.c -o $(DIST_DIR)/stns_group.o
+	$(CC) $(CFLAGS) -c stns_shadow.c -o $(DIST_DIR)/stns_shadow.o
+	$(CC) $(CFLAGS) -c stns.c -o $(DIST_DIR)/stns.o
+	$(CC) $(LDFLAGS) -shared $(LD_SONAME) -o $(DIST_DIR)/$(LIBRARY) \
+		$(DIST_DIR)/stns.o \
+		$(DIST_DIR)/stns_passwd.o \
+		$(DIST_DIR)/parson.o \
+		$(DIST_DIR)/toml.o \
+		$(DIST_DIR)/stns_group.o \
+		$(DIST_DIR)/stns_shadow.o \
 		$(STATIC_LIBS) \
 		-lpthread \
 		-ldl \
@@ -140,15 +144,15 @@ nss_build : build_dir ## Build nss_stns
 
 key_wrapper_build: build_dir ## Build nss_stns
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Building nss_stns$(RESET)"
-	$(CC) $(CFLAGS) -c toml.c -o $(BUILD)/toml.o
-	$(CC) $(CFLAGS) -c parson.c -o $(BUILD)/parson.o
-	$(CC) $(CFLAGS) -c stns_key_wrapper.c -o $(BUILD)/stns_key_wrapper.o
-	$(CC) $(CFLAGS) -c stns.c -o $(BUILD)/stns.o
-	$(CC) -o $(BUILD)/$(KEY_WRAPPER) \
-		$(BUILD)/stns.o \
-		$(BUILD)/stns_key_wrapper.o \
-		$(BUILD)/parson.o \
-		$(BUILD)/toml.o \
+	$(CC) $(CFLAGS) -c toml.c -o $(DIST_DIR)/toml.o
+	$(CC) $(CFLAGS) -c parson.c -o $(DIST_DIR)/parson.o
+	$(CC) $(CFLAGS) -c stns_key_wrapper.c -o $(DIST_DIR)/stns_key_wrapper.o
+	$(CC) $(CFLAGS) -c stns.c -o $(DIST_DIR)/stns.o
+	$(CC) -o $(DIST_DIR)/$(KEY_WRAPPER) \
+		$(DIST_DIR)/stns.o \
+		$(DIST_DIR)/stns_key_wrapper.o \
+		$(DIST_DIR)/parson.o \
+		$(DIST_DIR)/toml.o \
 		$(STATIC_LIBS) \
 		-lpthread \
 		-ldl \
@@ -175,14 +179,14 @@ install: install_lib install_key_wrapper ## Install stns
 install_lib: ## Install only shared objects
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Installing as Libraries$(RESET)"
 	[ -d $(LIBDIR) ] || install -d $(LIBDIR)
-	install $(BUILD)/$(LIBRARY) $(LIBDIR)
+	install $(DIST_DIR)/$(LIBRARY) $(LIBDIR)
 	cd $(LIBDIR); for link in $(LINKS); do ln -sf $(LIBRARY) $$link ; done;
 
 install_key_wrapper: ## Install only key wrapper
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Installing as Key Wrapper$(RESET)"
 	[ -d $(BINDIR) ] || install -d $(BINDIR)
 	[ -d $(BINSYMDIR) ] || install -d $(BINSYMDIR)
-	install $(BUILD)/$(KEY_WRAPPER) $(BINDIR)
+	install $(DIST_DIR)/$(KEY_WRAPPER) $(BINDIR)
 	ln -sf /usr/lib/stns/$(KEY_WRAPPER) $(BINSYMDIR)/
 
 source_for_rpm: ## Create source for RPM
