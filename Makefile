@@ -1,7 +1,7 @@
 # The base of this code is https://github.com/pyama86/stns/blob/master/Makefile
 CC=gcc
 CFLAGS=-Os -Wall -Wstrict-prototypes -Werror -fPIC -std=c99 -D_GNU_SOURCE -I$(CURL_DIR)/include
-LDFLAGS=-Wl,--version-script,libstns.map
+STNS_LDFLAGS=-Wl,--version-script,libstns.map
 
 LIBRARY=libnss_stns.so.2.0
 KEY_WRAPPER=stns-key-wrapper
@@ -29,7 +29,7 @@ ZLIB_VERSION=1.2.11
 DIST ?= unknown
 STNSD_VERSION=0.0.1
 
-DIST_DIR:=$(shell echo "`pwd`/tmp/$(DIST)")
+DIST_DIR:=/stns/tmp/$(DIST)
 SRC_DIR:=$(DIST_DIR)/src
 STNS_DIR:=$(DIST_DIR)/stns
 OPENSSL_DIR:=$(DIST_DIR)/openssl-$(OPENSSL_VERSION)
@@ -76,7 +76,7 @@ openssl: build_dir zlib
 	  no-asm \
 	  --openssldir=$(OPENSSL_DIR) \
 	  -Wl,--enable-new-dtags \
-	 &>> /tmp/result.txt && $(MAKE) depend &>> /tmp/result.txt && $(MAKE) && $(MAKE) install &>> /tmp/result.txt)
+	  && $(MAKE) depend && $(MAKE) && $(MAKE) install)
 
 curl: build_dir openssl
 	test -d $(SRC_DIR)/curl-$(CURL_VERSION) || (curl -sL https://curl.haxx.se/download/curl-$(CURL_VERSION).tar.gz -o $(SRC_DIR)/curl-$(CURL_VERSION).tar.gz && cd $(SRC_DIR) && tar xf curl-$(CURL_VERSION).tar.gz)
@@ -131,7 +131,7 @@ nss_build : build_dir curl ## Build nss_stns
 	$(CC) $(CFLAGS) -c stns_group.c -o $(STNS_DIR)/stns_group.o
 	$(CC) $(CFLAGS) -c stns_shadow.c -o $(STNS_DIR)/stns_shadow.o
 	$(CC) $(CFLAGS) -c stns.c -o $(STNS_DIR)/stns.o
-	$(CC) $(LDFLAGS) -shared $(LD_SONAME) -o $(STNS_DIR)/$(LIBRARY) \
+	$(CC) LDFLAGS=$(STNS_LDFLAGS) -shared $(LD_SONAME) -o $(STNS_DIR)/$(LIBRARY) \
 		$(STNS_DIR)/stns.o \
 		$(STNS_DIR)/stns_passwd.o \
 		$(STNS_DIR)/parson.o \
@@ -230,7 +230,7 @@ deb: source_for_deb ## Packaging for DEB
 		rm -rf debian/*.ex debian/*.EX debian/README.Debian && \
 		cp -v /stns/debian/* debian/ && \
 		sed -i -e 's/xenial/$(DIST)/g' debian/changelog && \
-		debuild -uc -us
+		debuild -e DIST=$(DIST) -uc -us
 	cd $(STNS_DIR) && \
 		find . -name "*.deb" | sed -e 's/\(\(.*libnss-stns-v2.*\).deb\)/mv \1 \2.$(DIST).deb/g' | sh && \
 		cp *.deb /stns/builds
