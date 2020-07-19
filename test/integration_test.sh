@@ -72,15 +72,15 @@ test_key_wrapper()
 key2
 aaabbbccc
 ddd" \
-    "$(tmp/github/stns/stns-key-wrapper test)"
+    "$(/usr/local/bin/stns-key-wrapper test)"
 
   assertEquals \
     "http request failed user: fuga" \
-    "$((tmp/github/stns/stns-key-wrapper fuga)2>&1)"
+    "$((/usr/local/bin/stns-key-wrapper fuga)2>&1)"
 
   assertEquals \
     "User name is a required parameter" \
-    "$((tmp/github/stns/stns-key-wrapper)2>&1)"
+    "$((/usr/local/bin/stns-key-wrapper)2>&1)"
 }
 
 

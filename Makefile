@@ -1,6 +1,6 @@
 # The base of this code is https://github.com/pyama86/stns/blob/master/Makefile
 CC=gcc
-CFLAGS=-Os -Wall -Wstrict-prototypes -Werror -fPIC -std=c99 -D_GNU_SOURCE -I$(CURL_DIR)/include
+CFLAGS=-Os -Wall -Wstrict-prototypes -Werror -fPIC -std=c99 -D_GNU_SOURCE -I$(CURL_DIR)/include -I$(OPENSSL_DIR)/include
 STNS_LDFLAGS=-Wl,--version-script,libstns.map
 
 LIBRARY=libnss_stns.so.2.0
@@ -18,8 +18,6 @@ BINDIR=$(PREFIX)/lib/stns
 BINSYMDIR=$(PREFIX)/local/bin/
 
 
-LIBS_CFLAGS=-Os -fPIC
-$(eval CURL_LDFLAGS := "-L$(shell if `test -e /etc/redhat-release`; then echo "/usr/lib64";else echo "/usr/lib/x86_64-linux-gnu";fi) $(LIBS_CFLAGS)")
 CRITERION_VERSION=2.3.2
 SHUNIT_VERSION=2.1.6
 CURL_VERSION=7.71.1
@@ -38,6 +36,10 @@ ZLIB_DIR:=$(DIST_DIR)/zlib-$(ZLIB_VERSION)
 SOURCES=Makefile stns.h stns.c stns*.c stns*.h toml.h toml.c parson.h parson.c stns.conf.example test libstns.map
 
 STATIC_LIBS=$(CURL_DIR)/lib/libcurl.a $(OPENSSL_DIR)/lib/libssl.a  $(OPENSSL_DIR)/lib/libcrypto.a $(ZLIB_DIR)/lib/libz.a
+
+LIBS_CFLAGS=-Os -fPIC
+#CURL_LDFLAGS := -ldl -lpthread -L$(shell if `test -e /etc/redhat-release`; then echo "/usr/lib64";else echo "/usr/lib/x86_64-linux-gnu";fi) $(LIBS_CFLAGS))
+CURL_LDFLAGS := -L$(OPENSSL_DIR)/lib $(LIBS_CFLAGS)
 
 MAKE=make -j4
 default: build
@@ -72,16 +74,16 @@ openssl: build_dir zlib
 	test -d $(SRC_DIR)/openssl-$(OPENSSL_VERSION) || (curl -sL https://www.openssl.org/source/openssl-$(OPENSSL_VERSION).tar.gz -o $(SRC_DIR)/openssl-$(OPENSSL_VERSION).tar.gz && cd $(SRC_DIR) && tar xf openssl-$(OPENSSL_VERSION).tar.gz)
 	test -f $(OPENSSL_DIR)/lib/libssl.a || (cd $(SRC_DIR)/openssl-$(OPENSSL_VERSION) && (make clean |true) && CFLAGS='$(LIBS_CFLAGS)' ./config \
 	  --prefix=$(OPENSSL_DIR) \
+	  --openssldir=$(OPENSSL_DIR) \
 	  no-ssl3 \
 	  no-asm \
-	  --openssldir=$(OPENSSL_DIR) \
 	  -Wl,--enable-new-dtags \
 	  && $(MAKE) depend && $(MAKE) && $(MAKE) install)
 
 curl: build_dir openssl
 	test -d $(SRC_DIR)/curl-$(CURL_VERSION) || (curl -sL https://curl.haxx.se/download/curl-$(CURL_VERSION).tar.gz -o $(SRC_DIR)/curl-$(CURL_VERSION).tar.gz && cd $(SRC_DIR) && tar xf curl-$(CURL_VERSION).tar.gz)
-	test -f $(CURL_DIR)/lib/libcurl.a || (cd $(SRC_DIR)/curl-$(CURL_VERSION) && (make clean |true) && \
-	  LDFLAGS=$(CURL_LDFLAGS) ./configure \
+	test -f $(CURL_DIR)/lib/libcurl.a || (cd $(SRC_DIR)/curl-$(CURL_VERSION) && (make clean | true) && \
+	  LIBS="-ldl -lpthread" LDFLAGS="$(CURL_LDFLAGS)" CFLAGS='$(LIBS_CFLAGS)' ./configure \
 	  --with-ssl=$(OPENSSL_DIR) \
 	  --with-libssl-prefix=$(OPENSSL_DIR) \
 	  --with-zlib=$(ZLIB_DIR) \
@@ -126,13 +128,14 @@ testdev: build_dir curl criterion stnsd  ## Test without dependencies installati
 build: nss_build key_wrapper_build
 nss_build : build_dir curl ## Build nss_stns
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Building nss_stns$(RESET)"
+	cd /stns
 	$(CC) $(CFLAGS) -c parson.c -o $(STNS_DIR)/parson.o
 	$(CC) $(CFLAGS) -c toml.c -o $(STNS_DIR)/toml.o
 	$(CC) $(CFLAGS) -c stns_passwd.c -o $(STNS_DIR)/stns_passwd.o
 	$(CC) $(CFLAGS) -c stns_group.c -o $(STNS_DIR)/stns_group.o
 	$(CC) $(CFLAGS) -c stns_shadow.c -o $(STNS_DIR)/stns_shadow.o
 	$(CC) $(CFLAGS) -c stns.c -o $(STNS_DIR)/stns.o
-	$(CC) LDFLAGS=$(STNS_LDFLAGS) -shared $(LD_SONAME) -o $(STNS_DIR)/$(LIBRARY) \
+	LDFLAGS=$(STNS_LDFLAGS) $(CC) -shared $(LD_SONAME) -o $(STNS_DIR)/$(LIBRARY) \
 		$(STNS_DIR)/stns.o \
 		$(STNS_DIR)/stns_passwd.o \
 		$(STNS_DIR)/parson.o \

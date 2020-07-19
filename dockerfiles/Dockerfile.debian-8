@@ -5,7 +5,6 @@ RUN apt-get -qqy update && \
     apt-get install -qqy glibc-source gcc make \
                         bzip2 unzip debhelper dh-make devscripts cdbs clang
 
-
 ENV USER root
 RUN mkdir /stns
 WORKDIR /stns
