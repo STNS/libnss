@@ -519,9 +519,9 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
 
   char *base = curl_escape(path, strlen(path));
   char dpath[MAXBUF + 1];
-  char fpath[MAXBUF * 2];
+  char fpath[MAXBUF * 2 + 2];
   snprintf(dpath, MAXBUF, "%s/%d", c->cache_dir, geteuid());
-  snprintf(fpath, MAXBUF, "%s/%s", dpath, base);
+  snprintf(fpath, MAXBUF * 2 + 2, "%s/%s", dpath, base);
 #ifdef DEBUG
   syslog(LOG_ERR, "%s(stns)[L%d] before free", __func__, __LINE__);
 #endif

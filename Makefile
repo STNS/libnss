@@ -26,16 +26,16 @@ CURL_VERSION=7.71.1
 OPENSSL_VERSION=1.1.1g
 ZLIB_VERSION=1.2.11
 
-SOURCES=Makefile stns.h stns.c stns*.c stns*.h toml.h toml.c parson.h parson.c stns.conf.example test libstns.map
 DIST ?= unknown
 STNSD_VERSION=0.0.1
 
 DIST_DIR:=$(shell echo "`pwd`/tmp/$(DIST)")
-#SRC_DIR:=$(shell echo "`pwd`/tmp/$(DIST)/src")
-SRC_DIR:=$(shell echo "`pwd`/tmp/src")
+SRC_DIR:=$(DIST_DIR)/src
+STNS_DIR:=$(DIST_DIR)/stns
 OPENSSL_DIR:=$(DIST_DIR)/openssl-$(OPENSSL_VERSION)
 CURL_DIR:=$(DIST_DIR)/curl-$(CURL_VERSION)
 ZLIB_DIR:=$(DIST_DIR)/zlib-$(ZLIB_VERSION)
+SOURCES=Makefile stns.h stns.c stns*.c stns*.h toml.h toml.c parson.h parson.c stns.conf.example test libstns.map
 
 STATIC_LIBS=$(CURL_DIR)/lib/libcurl.a $(OPENSSL_DIR)/lib/libssl.a  $(OPENSSL_DIR)/lib/libcrypto.a $(ZLIB_DIR)/lib/libz.a
 
@@ -60,6 +60,7 @@ test: testdev ## Test with dependencies installation
 build_dir: ## Create directory for build
 	test -d $(DIST_DIR) || mkdir -p $(DIST_DIR)
 	test -d $(SRC_DIR) || mkdir -p $(SRC_DIR)
+	test -d $(STNS_DIR) || mkdir -p $(STNS_DIR)
 
 zlib:  build_dir
 	test -d $(SRC_DIR)/zlib-$(ZLIB_VERSION) || (curl -sL https://zlib.net/zlib-$(ZLIB_VERSION).tar.xz -o $(SRC_DIR)/zlib-$(ZLIB_VERSION).tar.xz && cd $(SRC_DIR) && tar xf zlib-$(ZLIB_VERSION).tar.xz)
@@ -124,19 +125,19 @@ testdev: build_dir curl criterion stnsd  ## Test without dependencies installati
 build: nss_build key_wrapper_build
 nss_build : build_dir curl ## Build nss_stns
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Building nss_stns$(RESET)"
-	$(CC) $(CFLAGS) -c parson.c -o $(DIST_DIR)/parson.o
-	$(CC) $(CFLAGS) -c toml.c -o $(DIST_DIR)/toml.o
-	$(CC) $(CFLAGS) -c stns_passwd.c -o $(DIST_DIR)/stns_passwd.o
-	$(CC) $(CFLAGS) -c stns_group.c -o $(DIST_DIR)/stns_group.o
-	$(CC) $(CFLAGS) -c stns_shadow.c -o $(DIST_DIR)/stns_shadow.o
-	$(CC) $(CFLAGS) -c stns.c -o $(DIST_DIR)/stns.o
-	$(CC) $(LDFLAGS) -shared $(LD_SONAME) -o $(DIST_DIR)/$(LIBRARY) \
-		$(DIST_DIR)/stns.o \
-		$(DIST_DIR)/stns_passwd.o \
-		$(DIST_DIR)/parson.o \
-		$(DIST_DIR)/toml.o \
-		$(DIST_DIR)/stns_group.o \
-		$(DIST_DIR)/stns_shadow.o \
+	$(CC) $(CFLAGS) -c parson.c -o $(STNS_DIR)/parson.o
+	$(CC) $(CFLAGS) -c toml.c -o $(STNS_DIR)/toml.o
+	$(CC) $(CFLAGS) -c stns_passwd.c -o $(STNS_DIR)/stns_passwd.o
+	$(CC) $(CFLAGS) -c stns_group.c -o $(STNS_DIR)/stns_group.o
+	$(CC) $(CFLAGS) -c stns_shadow.c -o $(STNS_DIR)/stns_shadow.o
+	$(CC) $(CFLAGS) -c stns.c -o $(STNS_DIR)/stns.o
+	$(CC) $(LDFLAGS) -shared $(LD_SONAME) -o $(STNS_DIR)/$(LIBRARY) \
+		$(STNS_DIR)/stns.o \
+		$(STNS_DIR)/stns_passwd.o \
+		$(STNS_DIR)/parson.o \
+		$(STNS_DIR)/toml.o \
+		$(STNS_DIR)/stns_group.o \
+		$(STNS_DIR)/stns_shadow.o \
 		$(STATIC_LIBS) \
 		-lpthread \
 		-ldl \
@@ -144,15 +145,15 @@ nss_build : build_dir curl ## Build nss_stns
 
 key_wrapper_build: build_dir ## Build nss_stns
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Building nss_stns$(RESET)"
-	$(CC) $(CFLAGS) -c toml.c -o $(DIST_DIR)/toml.o
-	$(CC) $(CFLAGS) -c parson.c -o $(DIST_DIR)/parson.o
-	$(CC) $(CFLAGS) -c stns_key_wrapper.c -o $(DIST_DIR)/stns_key_wrapper.o
-	$(CC) $(CFLAGS) -c stns.c -o $(DIST_DIR)/stns.o
-	$(CC) -o $(DIST_DIR)/$(KEY_WRAPPER) \
-		$(DIST_DIR)/stns.o \
-		$(DIST_DIR)/stns_key_wrapper.o \
-		$(DIST_DIR)/parson.o \
-		$(DIST_DIR)/toml.o \
+	$(CC) $(CFLAGS) -c toml.c -o $(STNS_DIR)/toml.o
+	$(CC) $(CFLAGS) -c parson.c -o $(STNS_DIR)/parson.o
+	$(CC) $(CFLAGS) -c stns_key_wrapper.c -o $(STNS_DIR)/stns_key_wrapper.o
+	$(CC) $(CFLAGS) -c stns.c -o $(STNS_DIR)/stns.o
+	$(CC) -o $(STNS_DIR)/$(KEY_WRAPPER) \
+		$(STNS_DIR)/stns.o \
+		$(STNS_DIR)/stns_key_wrapper.o \
+		$(STNS_DIR)/parson.o \
+		$(STNS_DIR)/toml.o \
 		$(STATIC_LIBS) \
 		-lpthread \
 		-ldl \
@@ -179,47 +180,50 @@ install: install_lib install_key_wrapper ## Install stns
 install_lib: ## Install only shared objects
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Installing as Libraries$(RESET)"
 	[ -d $(LIBDIR) ] || install -d $(LIBDIR)
-	install $(DIST_DIR)/$(LIBRARY) $(LIBDIR)
+	install $(STNS_DIR)/$(LIBRARY) $(LIBDIR)
 	cd $(LIBDIR); for link in $(LINKS); do ln -sf $(LIBRARY) $$link ; done;
 
 install_key_wrapper: ## Install only key wrapper
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Installing as Key Wrapper$(RESET)"
 	[ -d $(BINDIR) ] || install -d $(BINDIR)
 	[ -d $(BINSYMDIR) ] || install -d $(BINSYMDIR)
-	install $(DIST_DIR)/$(KEY_WRAPPER) $(BINDIR)
+	install $(STNS_DIR)/$(KEY_WRAPPER) $(BINDIR)
 	ln -sf /usr/lib/stns/$(KEY_WRAPPER) $(BINSYMDIR)/
 
 source_for_rpm: ## Create source for RPM
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Distributing$(RESET)"
-	rm -rf $(DIST_DIR) libnss-stns-v2-$(VERSION).tar.gz
-	mkdir -p $(DIST_DIR)/libnss-stns-v2-$(VERSION)
-	cp -r $(SOURCES) $(DIST_DIR)/libnss-stns-v2-$(VERSION)
-	cd $(DIST_DIR) && \
+	rm -rf $(STNS_DIR) libnss-stns-v2-$(VERSION).tar.gz
+	mkdir -p $(STNS_DIR)/libnss-stns-v2-$(VERSION)
+	mkdir -p $(STNS_DIR)/libnss-stns-v2-$(VERSION)/tmp
+	cp -r $(SOURCES) $(STNS_DIR)/libnss-stns-v2-$(VERSION)
+	ln -sf $(DIST_DIR) $(STNS_DIR)/libnss-stns-v2-$(VERSION)/tmp/
+	cd $(STNS_DIR) && \
 		tar cf libnss-stns-v2-$(VERSION).tar libnss-stns-v2-$(VERSION) && \
 		gzip -9 libnss-stns-v2-$(VERSION).tar
-	cp $(DIST_DIR)/libnss-stns-v2-$(VERSION).tar.gz ./builds
-	rm -rf $(DIST_DIR)
+	cp $(STNS_DIR)/libnss-stns-v2-$(VERSION).tar.gz ./builds
+	rm -rf $(STNS_DIR)
 
-rpm: source_for_rpm curl ## Packaging for RPM
+rpm: source_for_rpm ## Packaging for RPM
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Packaging for RPM$(RESET)"
 	cp builds/libnss-stns-v2-$(VERSION).tar.gz /root/rpmbuild/SOURCES
+	mkdir -p /root/rpmbuild/tmp/
 	spectool -g -R rpm/stns.spec
 	rpmbuild -ba rpm/stns.spec
 	mv /root/rpmbuild/RPMS/*/*.rpm /stns/builds
 
 source_for_deb: ## Create source for DEB
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Distributing$(RESET)"
-	rm -rf $(DIST_DIR) libns
-	mkdir -p $(DIST_DIR)/libnss-stns-v2-$(VERSION)
-	cp -r $(SOURCES) $(DIST_DIR)/libnss-stns-v2-$(VERSION)
-	cd $(DIST_DIR) && \
+	rm -rf $(STNS_DIR)
+	mkdir -p $(STNS_DIR)/libnss-stns-v2-$(VERSION)
+	cp -r $(SOURCES) $(STNS_DIR)/libnss-stns-v2-$(VERSION)
+	cd $(STNS_DIR) && \
 		tar cf libnss-stns-v2_$(VERSION).tar libnss-stns-v2-$(VERSION) && \
 		xz -v libnss-stns-v2_$(VERSION).tar
-	mv $(DIST_DIR)/libnss-stns-v2_$(VERSION).tar.xz $(DIST_DIR)/libnss-stns-v2_$(VERSION).orig.tar.xz
+	mv $(STNS_DIR)/libnss-stns-v2_$(VERSION).tar.xz $(STNS_DIR)/libnss-stns-v2_$(VERSION).orig.tar.xz
 
-deb: source_for_deb curl ## Packaging for DEB
+deb: source_for_deb ## Packaging for DEB
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Packaging for DEB$(RESET)"
-	cd $(DIST_DIR) && \
+	cd $(STNS_DIR) && \
 		tar xf libnss-stns-v2_$(VERSION).orig.tar.xz && \
 		cd libnss-stns-v2-$(VERSION) && \
 		dh_make --single --createorig -y && \
@@ -227,10 +231,10 @@ deb: source_for_deb curl ## Packaging for DEB
 		cp -v /stns/debian/* debian/ && \
 		sed -i -e 's/xenial/$(DIST)/g' debian/changelog && \
 		debuild -uc -us
-	cd $(DIST_DIR) && \
+	cd $(STNS_DIR) && \
 		find . -name "*.deb" | sed -e 's/\(\(.*libnss-stns-v2.*\).deb\)/mv \1 \2.$(DIST).deb/g' | sh && \
 		cp *.deb /stns/builds
-	rm -rf $(DIST_DIR)
+	rm -rf $(STNS_DIR)
 pkg: ## Create some distribution packages
 	rm -rf builds && mkdir builds
 	docker-compose run --rm -v `pwd`:/stns nss_centos6
