@@ -63,13 +63,13 @@ build_dir: ## Create directory for build
 
 zlib:  build_dir
 	test -d $(SRC_DIR)/zlib-$(ZLIB_VERSION) || (curl -sL https://zlib.net/zlib-$(ZLIB_VERSION).tar.xz -o $(SRC_DIR)/zlib-$(ZLIB_VERSION).tar.xz && cd $(SRC_DIR) && tar xf zlib-$(ZLIB_VERSION).tar.xz)
-	test -f $(ZLIB_DIR)/lib/libz.a || (cd $(SRC_DIR)/zlib-$(ZLIB_VERSION) && CFLAGS='$(LIBS_CFLAGS)' ./configure \
+	test -f $(ZLIB_DIR)/lib/libz.a || (cd $(SRC_DIR)/zlib-$(ZLIB_VERSION) && (make clean |true) && CFLAGS='$(LIBS_CFLAGS)' ./configure \
 	  --prefix=$(ZLIB_DIR) \
 	&& $(MAKE) && $(MAKE) install)
 
 openssl: build_dir zlib
 	test -d $(SRC_DIR)/openssl-$(OPENSSL_VERSION) || (curl -sL https://www.openssl.org/source/openssl-$(OPENSSL_VERSION).tar.gz -o $(SRC_DIR)/openssl-$(OPENSSL_VERSION).tar.gz && cd $(SRC_DIR) && tar xf openssl-$(OPENSSL_VERSION).tar.gz)
-	test -f $(OPENSSL_DIR)/lib/libssl.a || (cd $(SRC_DIR)/openssl-$(OPENSSL_VERSION) && CFLAGS='$(LIBS_CFLAGS)' ./config \
+	test -f $(OPENSSL_DIR)/lib/libssl.a || (cd $(SRC_DIR)/openssl-$(OPENSSL_VERSION) && (make clean |true) && CFLAGS='$(LIBS_CFLAGS)' ./config \
 	  --prefix=$(OPENSSL_DIR) \
 	  no-ssl3 \
 	  no-asm \
@@ -79,7 +79,7 @@ openssl: build_dir zlib
 
 curl: build_dir openssl
 	test -d $(SRC_DIR)/curl-$(CURL_VERSION) || (curl -sL https://curl.haxx.se/download/curl-$(CURL_VERSION).tar.gz -o $(SRC_DIR)/curl-$(CURL_VERSION).tar.gz && cd $(SRC_DIR) && tar xf curl-$(CURL_VERSION).tar.gz)
-	test -f $(CURL_DIR)/lib/libcurl.a || (cd $(SRC_DIR)/curl-$(CURL_VERSION) && \
+	test -f $(CURL_DIR)/lib/libcurl.a || (cd $(SRC_DIR)/curl-$(CURL_VERSION) && (make clean |true) && \
 	  LDFLAGS=$(CURL_LDFLAGS) ./configure \
 	  --with-ssl=$(OPENSSL_DIR) \
 	  --with-zlib=$(ZLIB_DIR) \
