@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
   if (ret != 0)
     return -1;
 
-  sprintf(url, "users?name=%s", argv[optind]);
+  snprintf(url, sizeof(url), "users?name=%s", argv[optind]);
   curl_result = stns_request(&c, url, &r);
   if (curl_result != CURLE_OK) {
     fprintf(stderr, "http request failed user: %s\n", argv[optind]);

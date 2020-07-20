@@ -1,6 +1,5 @@
 #ifndef STNS_H
 #define STNS_H
-
 #include <curl/curl.h>
 #include <errno.h>
 #include <stdint.h>
@@ -56,6 +55,7 @@ struct stns_conf_t {
   char *password;
   char *query_wrapper;
   char *chain_ssh_wrapper;
+  char *unix_socket;
   char *http_proxy;
   char *cache_dir;
   char *tls_cert;
@@ -65,6 +65,7 @@ struct stns_conf_t {
   int uid_shift;
   int gid_shift;
   int ssl_verify;
+  int use_cached;
   int request_timeout;
   int request_retry;
   int request_locktime;
@@ -140,7 +141,7 @@ extern void set_group_lowest_id(int);
     if (stns_load_config(STNS_CONFIG_FILE, &c) != 0)                                                                   \
       return NSS_STATUS_UNAVAIL;                                                                                       \
     query_available;                                                                                                   \
-    sprintf(url, format, value id_shift);                                                                              \
+    snprintf(url, sizeof(url), format, value id_shift);                                                                \
     curl_result = stns_request(&c, url, &r);                                                                           \
                                                                                                                        \
     if (curl_result != CURLE_OK) {                                                                                     \

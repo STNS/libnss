@@ -17,7 +17,7 @@ pthread_mutex_t pwent_mutex = PTHREAD_MUTEX_INITIALIZER;
                                                                                                                        \
   STNS_SET_DEFAULT_VALUE(sh, shell, "/bin/bash");                                                                      \
   char b[MAXBUF];                                                                                                      \
-  sprintf(b, "/home/%s", name);                                                                                        \
+  snprintf(b, sizeof(b), "/home/%s", name);                                                                            \
   STNS_SET_DEFAULT_VALUE(d, dir, b);                                                                                   \
   SET_ATTRBUTE(pw, name, name)                                                                                         \
   SET_ATTRBUTE(pw, passwd, passwd)                                                                                     \

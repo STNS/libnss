@@ -8,13 +8,12 @@
 #include <unistd.h>
 #include <dirent.h>
 
-pthread_mutex_t user_mutex   = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t group_mutex  = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t delete_mutex = PTHREAD_MUTEX_INITIALIZER;
-int highest_user_id          = 0;
-int lowest_user_id           = 0;
-int highest_group_id         = 0;
-int lowest_group_id          = 0;
+pthread_mutex_t user_mutex  = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t group_mutex = PTHREAD_MUTEX_INITIALIZER;
+int highest_user_id         = 0;
+int lowest_user_id          = 0;
+int highest_group_id        = 0;
+int lowest_group_id         = 0;
 
 SET_GET_HIGH_LOW_ID(highest, user);
 SET_GET_HIGH_LOW_ID(lowest, user);
@@ -38,11 +37,11 @@ ID_QUERY_AVAILABLE(group, low, >)
 
 static void stns_force_create_cache_dir(stns_conf_t *c)
 {
-  if (c->cache && geteuid() == 0) {
+  if (c->cache && geteuid() == 0 && !c->use_cached) {
     struct stat statBuf;
 
     char path[MAXBUF];
-    sprintf(path, "%s", c->cache_dir);
+    snprintf(path, sizeof(path), "%s", c->cache_dir);
     mode_t um = {0};
     um        = umask(0);
     if (stat(path, &statBuf) != 0) {
@@ -83,6 +82,8 @@ int stns_load_config(char *filename, stns_conf_t *c)
   GET_TOML_BYKEY(password, toml_rtos, NULL, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(query_wrapper, toml_rtos, NULL, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(chain_ssh_wrapper, toml_rtos, NULL, TOML_NULL_OR_INT);
+  GET_TOML_BYKEY(unix_socket, toml_rtos, "/var/run/cache-stnsd.sock", TOML_STR);
+  GET_TOML_BYKEY(use_cached, toml_rtob, 0, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(http_proxy, toml_rtos, NULL, TOML_NULL_OR_INT);
   GET_TOML_BY_TABLE_KEY(tls, key, toml_rtos, NULL, TOML_NULL_OR_INT);
   GET_TOML_BY_TABLE_KEY(tls, cert, toml_rtos, NULL, TOML_NULL_OR_INT);
@@ -91,7 +92,7 @@ int stns_load_config(char *filename, stns_conf_t *c)
   GET_TOML_BYKEY(uid_shift, toml_rtoi, 0, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(gid_shift, toml_rtoi, 0, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(cache_ttl, toml_rtoi, 600, TOML_NULL_OR_INT);
-  GET_TOML_BYKEY(negative_cache_ttl, toml_rtoi, 60, TOML_NULL_OR_INT);
+  GET_TOML_BYKEY(negative_cache_ttl, toml_rtoi, 10, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(ssl_verify, toml_rtob, 1, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(cache, toml_rtob, 1, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(request_timeout, toml_rtoi, 10, TOML_NULL_OR_INT);
@@ -135,6 +136,7 @@ int stns_load_config(char *filename, stns_conf_t *c)
     }
     c->http_headers->headers = http_headers;
     c->http_headers->size    = (size_t)header_size;
+
   } else {
     c->http_headers = NULL;
   }
@@ -163,6 +165,7 @@ void stns_unload_config(stns_conf_t *c)
   UNLOAD_TOML_BYKEY(tls_cert);
   UNLOAD_TOML_BYKEY(tls_key);
   UNLOAD_TOML_BYKEY(tls_ca);
+  UNLOAD_TOML_BYKEY(unix_socket);
 
   if (c->http_headers != NULL) {
     int i = 0;
@@ -247,42 +250,13 @@ static size_t response_callback(void *buffer, size_t size, size_t nmemb, void *u
 // base https://github.com/linyows/octopass/blob/master/octopass.c
 static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *res)
 {
-  char *auth;
+  char *auth       = NULL;
   char *in_headers = NULL;
   char *url;
   CURL *curl;
   CURLcode result;
   struct curl_slist *headers = NULL;
-
-  if (c->auth_token != NULL) {
-    auth = (char *)malloc(strlen(c->auth_token) + 22);
-    sprintf(auth, "Authorization: token %s", c->auth_token);
-  } else {
-    auth = NULL;
-  }
-
-  url = (char *)malloc(strlen(c->api_endpoint) + strlen(path) + 2);
-  sprintf(url, "%s/%s", c->api_endpoint, path);
-
-  if (auth != NULL) {
-    headers = curl_slist_append(headers, auth);
-  }
-
-  if (c->http_headers != NULL) {
-
-    int i, size = 0;
-    for (i = 0; i < c->http_headers->size; i++) {
-      size += strlen(c->http_headers->headers[i].key) + strlen(c->http_headers->headers[i].value) + 3;
-      if (in_headers == NULL)
-        in_headers = (char *)malloc(size);
-      else
-        in_headers = (char *)realloc(in_headers, size);
-
-      sprintf(in_headers, "%s: %s", c->http_headers->headers[i].key, c->http_headers->headers[i].value);
-      headers = curl_slist_append(headers, in_headers);
-    }
-  }
-
+  size_t len;
 #ifdef DEBUG
   syslog(LOG_ERR, "%s(stns)[L%d] send http request: %s", __func__, __LINE__, url);
 #endif
@@ -290,39 +264,76 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
 #ifdef DEBUG
   syslog(LOG_ERR, "%s(stns)[L%d] init http request: %s", __func__, __LINE__, url);
 #endif
+
+  if (!c->use_cached) {
+    if (c->auth_token != NULL) {
+      len  = strlen(c->auth_token) + 22;
+      auth = (char *)malloc(len);
+      snprintf(auth, len, "Authorization: token %s", c->auth_token);
+    } else {
+      auth = NULL;
+    }
+
+    len = strlen(c->api_endpoint) + strlen(path) + 2;
+    url = (char *)malloc(strlen(c->api_endpoint) + strlen(path) + 2);
+    snprintf(url, len, "%s/%s", c->api_endpoint, path);
+
+    if (auth != NULL) {
+      headers = curl_slist_append(headers, auth);
+    }
+
+    if (c->http_headers != NULL) {
+
+      int i, size = 0;
+      for (i = 0; i < c->http_headers->size; i++) {
+        size += strlen(c->http_headers->headers[i].key) + strlen(c->http_headers->headers[i].value) + 3;
+        if (in_headers == NULL)
+          in_headers = (char *)malloc(size);
+        else
+          in_headers = (char *)realloc(in_headers, size);
+
+        snprintf(in_headers, strlen(c->http_headers->headers[i].key) + strlen(c->http_headers->headers[i].value) + 3,
+                 "%s: %s", c->http_headers->headers[i].key, c->http_headers->headers[i].value);
+        headers = curl_slist_append(headers, in_headers);
+      }
+    }
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, c->ssl_verify);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, c->ssl_verify);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, STNS_VERSION_WITH_NAME);
+    if (c->tls_cert != NULL && c->tls_key != NULL) {
+      curl_easy_setopt(curl, CURLOPT_SSLCERT, c->tls_cert);
+      curl_easy_setopt(curl, CURLOPT_SSLKEY, c->tls_key);
+    }
+
+    if (c->tls_ca != NULL) {
+      curl_easy_setopt(curl, CURLOPT_CAINFO, c->tls_ca);
+    }
+
+    if (c->user != NULL) {
+      curl_easy_setopt(curl, CURLOPT_USERNAME, c->user);
+    }
+
+    if (c->password != NULL) {
+      curl_easy_setopt(curl, CURLOPT_PASSWORD, c->password);
+    }
+
+    if (c->http_proxy != NULL) {
+      curl_easy_setopt(curl, CURLOPT_PROXY, c->http_proxy);
+    }
+  } else {
+    curl_easy_setopt(curl, CURLOPT_UNIX_SOCKET_PATH, c->unix_socket);
+    url = (char *)malloc(strlen("http://unix") + strlen(path) + 2);
+    snprintf(url, strlen("http://unix") + strlen(path) + 2, "%s/%s", "http://unix", path);
+  }
   curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
-  curl_easy_setopt(curl, CURLOPT_USERAGENT, STNS_VERSION_WITH_NAME);
-  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-  curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, c->ssl_verify);
-  curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, c->ssl_verify);
   curl_easy_setopt(curl, CURLOPT_TIMEOUT, c->request_timeout);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
   curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, header_callback);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, res);
   curl_easy_setopt(curl, CURLOPT_HEADERDATA, c);
   curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
-
-  if (c->tls_cert != NULL && c->tls_key != NULL) {
-    curl_easy_setopt(curl, CURLOPT_SSLCERT, c->tls_cert);
-    curl_easy_setopt(curl, CURLOPT_SSLKEY, c->tls_key);
-  }
-
-  if (c->tls_ca != NULL) {
-    curl_easy_setopt(curl, CURLOPT_CAINFO, c->tls_ca);
-  }
-
-  if (c->user != NULL) {
-    curl_easy_setopt(curl, CURLOPT_USERNAME, c->user);
-  }
-
-  if (c->password != NULL) {
-    curl_easy_setopt(curl, CURLOPT_PASSWORD, c->password);
-  }
-
-  if (c->http_proxy != NULL) {
-    curl_easy_setopt(curl, CURLOPT_PROXY, c->http_proxy);
-  }
 
 #ifdef DEBUG
   syslog(LOG_ERR, "%s(stns)[L%d] before request http request: %s", __func__, __LINE__, url);
@@ -351,11 +362,18 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
 #ifdef DEBUG
   syslog(LOG_ERR, "%s(stns)[L%d] before free", __func__, __LINE__);
 #endif
-  free(auth);
-  free(in_headers);
+  if (!c->use_cached) {
+    if (c->auth_token != NULL) {
+      free(auth);
+    }
+    if (c->http_headers != NULL) {
+      free(in_headers);
+    }
+    curl_slist_free_all(headers);
+  }
+
   free(url);
   curl_easy_cleanup(curl);
-  curl_slist_free_all(headers);
 #ifdef DEBUG
   syslog(LOG_ERR, "%s(stns)[L%d] after free", __func__, __LINE__);
 #endif
@@ -446,29 +464,23 @@ int stns_import_file(char *file, stns_response_t *res)
   return 1;
 }
 
-static void *delete_cache_files(void *data)
+static void delete_cache_files(stns_conf_t *c)
 {
-  stns_conf_t *c = (stns_conf_t *)data;
   DIR *dp;
   struct dirent *ent;
   struct stat statbuf;
   unsigned long now = time(NULL);
   char dir[MAXBUF];
-  sprintf(dir, "%s/%d", c->cache_dir, geteuid());
+  snprintf(dir, sizeof(dir), "%s/%d", c->cache_dir, geteuid());
 
-  if (pthread_mutex_retrylock(&delete_mutex) != 0)
-    return NULL;
   if ((dp = opendir(dir)) == NULL) {
-    syslog(LOG_ERR, "%s(stns)[L%d] cannot open %s: %s", __func__, __LINE__, dir, strerror(errno));
-    pthread_mutex_unlock(&delete_mutex);
-    syslog(LOG_ERR, "%s(stns)[L%d] after cannot open %s: %s", __func__, __LINE__, dir, strerror(errno));
-    return NULL;
+    return;
   }
 
   char *buf = malloc(1);
   while ((ent = readdir(dp)) != NULL) {
     buf = (char *)realloc(buf, strlen(dir) + strlen(ent->d_name) + 2);
-    sprintf(buf, "%s/%s", dir, ent->d_name);
+    snprintf(buf, strlen(dir) + strlen(ent->d_name) + 2, "%s/%s", dir, ent->d_name);
 
     if (stat(buf, &statbuf) == 0 && (statbuf.st_uid == geteuid() || geteuid() == 0)) {
       unsigned long diff = now - statbuf.st_mtime;
@@ -487,17 +499,15 @@ static void *delete_cache_files(void *data)
 #endif
   free(buf);
   closedir(dp);
-  pthread_mutex_unlock(&delete_mutex);
 #ifdef DEBUG
   syslog(LOG_ERR, "%s(stns)[L%d] after free", __func__, __LINE__);
 #endif
-  return NULL;
+  return;
 }
 
 int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
 {
   CURLcode result;
-  pthread_t pthread;
   int retry_count  = c->request_retry;
   res->data        = (char *)malloc(sizeof(char));
   res->size        = 0;
@@ -508,10 +518,10 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
   }
 
   char *base = curl_escape(path, strlen(path));
-  char dpath[MAXBUF];
-  char fpath[MAXBUF];
-  sprintf(dpath, "%s/%d", c->cache_dir, geteuid());
-  sprintf(fpath, "%s/%s", dpath, base);
+  char dpath[MAXBUF + 1];
+  char fpath[MAXBUF * 2 + 2];
+  snprintf(dpath, MAXBUF, "%s/%d", c->cache_dir, geteuid());
+  snprintf(fpath, MAXBUF * 2 + 2, "%s/%s", dpath, base);
 #ifdef DEBUG
   syslog(LOG_ERR, "%s(stns)[L%d] before free", __func__, __LINE__);
 #endif
@@ -520,7 +530,7 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
   syslog(LOG_ERR, "%s(stns)[L%d] after free", __func__, __LINE__);
 #endif
 
-  if (c->cache) {
+  if (c->cache && !c->use_cached) {
     struct stat statbuf;
     if (stat(fpath, &statbuf) == 0 && statbuf.st_uid == geteuid()) {
       unsigned long now  = time(NULL);
@@ -533,15 +543,13 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
           return CURLE_HTTP_RETURNED_ERROR;
         }
 
-        if (pthread_mutex_retrylock(&delete_mutex) != 0)
-          goto request;
         if (!stns_import_file(fpath, res)) {
-          pthread_mutex_unlock(&delete_mutex);
           goto request;
         }
-        pthread_mutex_unlock(&delete_mutex);
         res->size = strlen(res->data);
         return CURLE_OK;
+      } else {
+        delete_cache_files(c);
       }
     }
   }
@@ -549,10 +557,6 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
 request:
   if (!stns_request_available(STNS_LOCK_FILE, c))
     return CURLE_COULDNT_CONNECT;
-
-  if (c->cache) {
-    pthread_create(&pthread, NULL, &delete_cache_files, (void *)c);
-  }
 
   if (c->query_wrapper == NULL) {
     result = inner_http_request(c, path, res);
@@ -577,12 +581,8 @@ request:
     stns_make_lockfile(STNS_LOCK_FILE);
   }
 
-  if (c->cache) {
-    pthread_join(pthread, NULL);
-    if (pthread_mutex_retrylock(&delete_mutex) == 0) {
-      stns_export_file(dpath, fpath, res->data);
-      pthread_mutex_unlock(&delete_mutex);
-    }
+  if (c->cache && !c->use_cached) {
+    stns_export_file(dpath, fpath, res->data);
   }
   return result;
 }
@@ -627,7 +627,7 @@ int stns_exec_cmd(char *cmd, char *arg, stns_response_t *r)
 #endif
   if (arg != NULL) {
     c = malloc(strlen(cmd) + strlen(arg) + 2);
-    sprintf(c, "%s %s", cmd, arg);
+    snprintf(c, strlen(cmd) + strlen(arg) + 2, "%s %s", cmd, arg);
   } else {
     c = cmd;
   }

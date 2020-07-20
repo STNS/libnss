@@ -1,18 +1,18 @@
 Summary:          SimpleTomlNameService Nss Module
 Name:             libnss-stns-v2
-Version:          2.5.3
-Release:          2
+Version:          2.6.0
+Release:          1
 License:          GPLv3
 URL:              https://github.com/STNS/STNS
 Source:           %{name}-%{version}.tar.gz
 Group:            System Environment/Base
 Packager:         pyama86 <www.kazu.com@gmail.com>
 %if 0%{?rhel} < 7
-Requires:         glibc openssl
-BuildRequires:    gcc make openssl-devel
+Requires:         glibc cache-stnsd
+BuildRequires:    gcc make
 %else
-Requires:         glibc openssl-libs
-BuildRequires:    gcc make openssl-devel
+Requires:         glibc cache-stnsd
+BuildRequires:    gcc make
 %endif
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:        i386, x86_64
@@ -26,7 +26,7 @@ We provide name resolution of Linux user group using STNS.
 %setup -q -n %{name}-%{version}
 
 %build
-make build_static
+make build
 
 %install
 %{__rm} -rf %{buildroot}
@@ -35,7 +35,6 @@ mkdir -p %{buildroot}%{_sysconfdir}
 
 [ ! `test -e %{_libdir}/libnss_stns.so.2.0` ] || cp -p %{_libdir}/libnss_stns.so.2.0 %{_libdir}/libnss_stns.so.2.0.back
 make PREFIX=%{buildroot}/usr install
-install -d -m 1777 %{buildroot}/var/cache/stns
 install -d -m 0744 %{buildroot}%{_sysconfdir}/stns/client/
 install -m 644 stns.conf.example %{buildroot}%{_sysconfdir}/stns/client/stns.conf
 
@@ -45,7 +44,7 @@ install -m 644 stns.conf.example %{buildroot}%{_sysconfdir}/stns/client/stns.con
 
 %post
 sed -i "s/^IPAddressDeny=any/#IPAddressDeny=any/" /lib/systemd/system/systemd-logind.service || true
-(! which systemctl &> /dev/null) || (systemctl status systemd-logind --no-pager && systemctl daemon-reload && systemctl restart systemd-logind)
+(! which systemctl &> /dev/null) || (systemctl daemon-reload && systemctl status systemd-logind --no-pager && systemctl restart systemd-logind)
 
 %preun
 
@@ -59,10 +58,12 @@ sed -i "s/^IPAddressDeny=any/#IPAddressDeny=any/" /lib/systemd/system/systemd-lo
 /usr/lib64/libnss_stns.so.2.0
 /usr/lib/stns/stns-key-wrapper
 /usr/local/bin/stns-key-wrapper
-/var/cache/stns
 %config(noreplace) /etc/stns/client/stns.conf
 
 %changelog
+* Tue Jul 14 2020 pyama86 <www.kazu.com@gmail.com> - 2.6.0-1
+- add cache-stnsd options
+- static build openssl and curl
 * Wed May 13 2020 pyama86 <www.kazu.com@gmail.com> - 2.5.3-2
 - check for the existence systemctl command
 * Fri Dec 27 2019 pyama86 <www.kazu.com@gmail.com> - 2.5.3-1
