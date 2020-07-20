@@ -38,7 +38,6 @@ SOURCES=Makefile stns.h stns.c stns*.c stns*.h toml.h toml.c parson.h parson.c s
 STATIC_LIBS=$(CURL_DIR)/lib/libcurl.a $(OPENSSL_DIR)/lib/libssl.a  $(OPENSSL_DIR)/lib/libcrypto.a $(ZLIB_DIR)/lib/libz.a
 
 LIBS_CFLAGS=-Os -fPIC
-#CURL_LDFLAGS := -ldl -lpthread -L$(shell if `test -e /etc/redhat-release`; then echo "/usr/lib64";else echo "/usr/lib/x86_64-linux-gnu";fi) $(LIBS_CFLAGS))
 CURL_LDFLAGS := -L$(OPENSSL_DIR)/lib $(LIBS_CFLAGS)
 
 MAKE=make -j4
@@ -75,6 +74,7 @@ openssl: build_dir zlib
 	test -f $(OPENSSL_DIR)/lib/libssl.a || (cd $(SRC_DIR)/openssl-$(OPENSSL_VERSION) && (make clean |true) && CFLAGS='$(LIBS_CFLAGS)' ./config \
 	  --prefix=$(OPENSSL_DIR) \
 	  --openssldir=$(OPENSSL_DIR) \
+	  no-shared \
 	  no-ssl3 \
 	  no-asm \
 	  -Wl,--enable-new-dtags \
@@ -129,13 +129,13 @@ build: nss_build key_wrapper_build
 nss_build : build_dir curl ## Build nss_stns
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Building nss_stns$(RESET)"
 	cd /stns
-	$(CC) $(CFLAGS) -c parson.c -o $(STNS_DIR)/parson.o
-	$(CC) $(CFLAGS) -c toml.c -o $(STNS_DIR)/toml.o
-	$(CC) $(CFLAGS) -c stns_passwd.c -o $(STNS_DIR)/stns_passwd.o
-	$(CC) $(CFLAGS) -c stns_group.c -o $(STNS_DIR)/stns_group.o
-	$(CC) $(CFLAGS) -c stns_shadow.c -o $(STNS_DIR)/stns_shadow.o
-	$(CC) $(CFLAGS) -c stns.c -o $(STNS_DIR)/stns.o
-	LDFLAGS=$(STNS_LDFLAGS) $(CC) -shared $(LD_SONAME) -o $(STNS_DIR)/$(LIBRARY) \
+	$(CC) $(STNS_LDFLAGS) $(CFLAGS) -c parson.c -o $(STNS_DIR)/parson.o
+	$(CC) $(STNS_LDFLAGS) $(CFLAGS) -c toml.c -o $(STNS_DIR)/toml.o
+	$(CC) $(STNS_LDFLAGS) $(CFLAGS) -c stns_passwd.c -o $(STNS_DIR)/stns_passwd.o
+	$(CC) $(STNS_LDFLAGS) $(CFLAGS) -c stns_group.c -o $(STNS_DIR)/stns_group.o
+	$(CC) $(STNS_LDFLAGS) $(CFLAGS) -c stns_shadow.c -o $(STNS_DIR)/stns_shadow.o
+	$(CC) $(STNS_LDFLAGS) $(CFLAGS) -c stns.c -o $(STNS_DIR)/stns.o
+	 $(CC) $(STNS_LDFLAGS) -shared $(LD_SONAME) -o $(STNS_DIR)/$(LIBRARY) \
 		$(STNS_DIR)/stns.o \
 		$(STNS_DIR)/stns_passwd.o \
 		$(STNS_DIR)/parson.o \
@@ -147,7 +147,7 @@ nss_build : build_dir curl ## Build nss_stns
 		-ldl \
 		-lrt
 
-key_wrapper_build: build_dir ## Build nss_stns
+key_wrapper_build: build_dir ## Build key wrapper
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Building nss_stns$(RESET)"
 	$(CC) $(CFLAGS) -c toml.c -o $(STNS_DIR)/toml.o
 	$(CC) $(CFLAGS) -c parson.c -o $(STNS_DIR)/parson.o

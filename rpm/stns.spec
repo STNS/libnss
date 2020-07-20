@@ -62,7 +62,8 @@ sed -i "s/^IPAddressDeny=any/#IPAddressDeny=any/" /lib/systemd/system/systemd-lo
 
 %changelog
 * Tue Jul 14 2020 pyama86 <www.kazu.com@gmail.com> - 2.6.0-1
-- use cache-stnsd
+- add cache-stnsd options
+- static build openssl and curl
 * Wed May 13 2020 pyama86 <www.kazu.com@gmail.com> - 2.5.3-2
 - check for the existence systemctl command
 * Fri Dec 27 2019 pyama86 <www.kazu.com@gmail.com> - 2.5.3-1
