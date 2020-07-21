@@ -14,10 +14,9 @@ Please give me a pull request anything!
 ### Test
 #### Client
 ```
-$ make docker
-# make curl
-# make depsdev
-# make test
+$ make login
+$ make test
+$ make integration
 ```
 
 ## author
