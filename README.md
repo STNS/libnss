@@ -1,5 +1,5 @@
 # libnss
-[![Build Status](https://travis-ci.org/STNS/libnss.svg?branch=master)](https://travis-ci.org/STNS/libnss)
+![C/C++ CI](https://github.com/STNS/libnss/workflows/C/C++%20CI/badge.svg)
 
 STNS is used by sshd to access keys and user/group resolver provided
 
