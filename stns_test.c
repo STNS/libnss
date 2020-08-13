@@ -12,6 +12,7 @@ stns_conf_t test_conf()
   c.user            = NULL;
   c.ssl_verify      = 0;
   c.use_cached      = 0;
+  c.cached_enable   = 0;
   c.password        = NULL;
   c.query_wrapper   = NULL;
   c.tls_cert        = NULL;
@@ -73,7 +74,7 @@ Test(stns_load_config, load_ok)
   cr_assert_str_eq(c.unix_socket, "/var/run/cache-stnsd.sock");
   cr_assert_str_eq(c.http_proxy, "http://your.proxy.com");
   cr_assert_eq(c.ssl_verify, 1);
-  cr_assert_eq(c.use_cached, 0);
+  cr_assert_eq(c.cached_enable, 1);
   cr_assert_eq(c.uid_shift, 1000);
   cr_assert_eq(c.gid_shift, 2000);
   cr_assert_eq(c.request_timeout, 3);
@@ -112,6 +113,7 @@ Test(stns_request, http_cache)
   c.cache_ttl          = 1;
   c.negative_cache_ttl = 1;
   c.use_cached         = 0;
+  c.cached_enable      = 0;
 
   mkdir("/var/cache/stns/", S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO);
   stns_request(&c, "get?notfound", &r);
@@ -239,8 +241,9 @@ Test(query_available, ok)
 Test(stns_request, http_request_with_cached)
 {
   char expect_body[1024];
-  stns_conf_t c = test_conf();
-  c.use_cached  = 1;
+  stns_conf_t c   = test_conf();
+  c.use_cached    = 1;
+  c.cached_enable = 1;
   stns_response_t r;
   stns_request(&c, "user-agent", &r);
 
@@ -251,8 +254,9 @@ Test(stns_request, http_request_with_cached)
 Test(stns_request, http_request_notfound_with_cached)
 {
   char expect_body[1024];
-  stns_conf_t c = test_conf();
-  c.use_cached  = 1;
+  stns_conf_t c   = test_conf();
+  c.use_cached    = 1;
+  c.cached_enable = 1;
   stns_response_t r;
 
   cr_assert_eq(stns_request(&c, "status/404", &r), CURLE_HTTP_RETURNED_ERROR);
