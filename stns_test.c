@@ -113,6 +113,7 @@ Test(stns_request, http_cache)
   c.negative_cache_ttl = 1;
   c.use_cached         = 0;
 
+  mkdir("/var/cache/stns/", S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO);
   stns_request(&c, "get?notfound", &r);
   cr_assert_eq(stat(path, &st), -1);
   free(r.data);
