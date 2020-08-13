@@ -37,7 +37,7 @@ ID_QUERY_AVAILABLE(group, low, >)
 
 static void stns_force_create_cache_dir(stns_conf_t *c)
 {
-  if (c->cache && geteuid() == 0 && !c->use_cached) {
+  if (c->cache && geteuid() == 0 && !c->cached_enable) {
     struct stat statBuf;
 
     char path[MAXBUF];
@@ -88,6 +88,7 @@ int stns_load_config(char *filename, stns_conf_t *c)
   GET_TOML_BY_TABLE_KEY(tls, key, toml_rtos, NULL, TOML_NULL_OR_INT);
   GET_TOML_BY_TABLE_KEY(tls, cert, toml_rtos, NULL, TOML_NULL_OR_INT);
   GET_TOML_BY_TABLE_KEY(tls, ca, toml_rtos, NULL, TOML_NULL_OR_INT);
+  GET_TOML_BY_TABLE_KEY(cached, enable, toml_rtob, 0, TOML_NULL_OR_INT);
 
   GET_TOML_BYKEY(uid_shift, toml_rtoi, 0, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(gid_shift, toml_rtoi, 0, TOML_NULL_OR_INT);
@@ -149,6 +150,10 @@ int stns_load_config(char *filename, stns_conf_t *c)
 #ifdef DEBUG
   syslog(LOG_ERR, "%s(stns)[L%d] after free", __func__, __LINE__);
 #endif
+
+  if (c->use_cached) {
+    c->cached_enable = 1;
+  }
   return 0;
 }
 
@@ -265,7 +270,7 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
   syslog(LOG_ERR, "%s(stns)[L%d] init http request: %s", __func__, __LINE__, url);
 #endif
 
-  if (!c->use_cached) {
+  if (!c->cached_enable) {
     if (c->auth_token != NULL) {
       len  = strlen(c->auth_token) + 22;
       auth = (char *)malloc(len);
@@ -362,7 +367,7 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
 #ifdef DEBUG
   syslog(LOG_ERR, "%s(stns)[L%d] before free", __func__, __LINE__);
 #endif
-  if (!c->use_cached) {
+  if (!c->cached_enable) {
     if (c->auth_token != NULL) {
       free(auth);
     }
@@ -530,7 +535,7 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
   syslog(LOG_ERR, "%s(stns)[L%d] after free", __func__, __LINE__);
 #endif
 
-  if (c->cache && !c->use_cached) {
+  if (c->cache && !c->cached_enable) {
     struct stat statbuf;
     if (stat(fpath, &statbuf) == 0 && statbuf.st_uid == geteuid()) {
       unsigned long now  = time(NULL);
@@ -581,7 +586,7 @@ request:
     stns_make_lockfile(STNS_LOCK_FILE);
   }
 
-  if (c->cache && !c->use_cached) {
+  if (c->cache && !c->cached_enable) {
     stns_export_file(dpath, fpath, res->data);
   }
   return result;
