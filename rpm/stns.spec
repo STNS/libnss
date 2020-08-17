@@ -1,6 +1,6 @@
 Summary:          SimpleTomlNameService Nss Module
 Name:             libnss-stns-v2
-Version:          2.6.1
+Version:          2.6.2
 Release:          1
 License:          GPLv3
 URL:              https://github.com/STNS/STNS
@@ -61,6 +61,8 @@ sed -i "s/^IPAddressDeny=any/#IPAddressDeny=any/" /lib/systemd/system/systemd-lo
 %config(noreplace) /etc/stns/client/stns.conf
 
 %changelog
+* Mon Aug 17 2020 pyama86 <www.kazu.com@gmail.com> - 2.6.2-1
+- move unix socket parameter to cached directive
 * Thu Aug 13 2020 pyama86 <www.kazu.com@gmail.com> - 2.6.1-1
 - add cached directive
 * Tue Jul 14 2020 pyama86 <www.kazu.com@gmail.com> - 2.6.0-1
