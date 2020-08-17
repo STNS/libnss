@@ -55,13 +55,13 @@ struct stns_conf_t {
   char *password;
   char *query_wrapper;
   char *chain_ssh_wrapper;
-  char *unix_socket;
   char *http_proxy;
   char *cache_dir;
   char *tls_cert;
   char *tls_key;
   char *tls_ca;
   int cached_enable;
+  char *cached_unix_socket;
   stns_user_httpheaders_t *http_headers;
   int uid_shift;
   int gid_shift;

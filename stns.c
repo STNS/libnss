@@ -82,13 +82,13 @@ int stns_load_config(char *filename, stns_conf_t *c)
   GET_TOML_BYKEY(password, toml_rtos, NULL, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(query_wrapper, toml_rtos, NULL, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(chain_ssh_wrapper, toml_rtos, NULL, TOML_NULL_OR_INT);
-  GET_TOML_BYKEY(unix_socket, toml_rtos, "/var/run/cache-stnsd.sock", TOML_STR);
   GET_TOML_BYKEY(use_cached, toml_rtob, 0, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(http_proxy, toml_rtos, NULL, TOML_NULL_OR_INT);
   GET_TOML_BY_TABLE_KEY(tls, key, toml_rtos, NULL, TOML_NULL_OR_INT);
   GET_TOML_BY_TABLE_KEY(tls, cert, toml_rtos, NULL, TOML_NULL_OR_INT);
   GET_TOML_BY_TABLE_KEY(tls, ca, toml_rtos, NULL, TOML_NULL_OR_INT);
   GET_TOML_BY_TABLE_KEY(cached, enable, toml_rtob, 0, TOML_NULL_OR_INT);
+  GET_TOML_BY_TABLE_KEY(cached, unix_socket, toml_rtos, "/var/run/cache-stnsd.sock", TOML_STR);
 
   GET_TOML_BYKEY(uid_shift, toml_rtoi, 0, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(gid_shift, toml_rtoi, 0, TOML_NULL_OR_INT);
@@ -170,7 +170,7 @@ void stns_unload_config(stns_conf_t *c)
   UNLOAD_TOML_BYKEY(tls_cert);
   UNLOAD_TOML_BYKEY(tls_key);
   UNLOAD_TOML_BYKEY(tls_ca);
-  UNLOAD_TOML_BYKEY(unix_socket);
+  UNLOAD_TOML_BYKEY(cached_unix_socket);
 
   if (c->http_headers != NULL) {
     int i = 0;
@@ -327,7 +327,7 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
       curl_easy_setopt(curl, CURLOPT_PROXY, c->http_proxy);
     }
   } else {
-    curl_easy_setopt(curl, CURLOPT_UNIX_SOCKET_PATH, c->unix_socket);
+    curl_easy_setopt(curl, CURLOPT_UNIX_SOCKET_PATH, c->cached_unix_socket);
     url = (char *)malloc(strlen("http://unix") + strlen(path) + 2);
     snprintf(url, strlen("http://unix") + strlen(path) + 2, "%s/%s", "http://unix", path);
   }
