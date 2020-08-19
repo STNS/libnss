@@ -239,15 +239,15 @@ deb: source_for_deb ## Packaging for DEB
 		find . -name "*.deb" | sed -e 's/\(\(.*libnss-stns-v2.*\).deb\)/mv \1 \2.$(DIST).deb/g' | sh && \
 		cp *.deb /stns/builds
 	rm -rf $(STNS_DIR)
+
+
+SUPPORTOS=centos6 centos7 cetos8 ubuntu16 ubuntu18 ubuntu20 debian8 debian9
 pkg: ## Create some distribution packages
 	rm -rf builds && mkdir builds
-	docker-compose run --rm -v `pwd`:/stns nss_centos6
-	docker-compose run --rm -v `pwd`:/stns nss_centos7
-	docker-compose run --rm -v `pwd`:/stns nss_centos8
-	docker-compose run --rm -v `pwd`:/stns nss_ubuntu16
-	docker-compose run --rm -v `pwd`:/stns nss_ubuntu18
-	docker-compose run --rm -v `pwd`:/stns nss_debian8
-	docker-compose run --rm -v `pwd`:/stns nss_debian9
+	for i in $(SUPPORTOS); do\
+	  docker-compose build nss_$$i \
+	  docker-compose run --rm -v `pwd`:/stns nss_$$i \
+	done
 
 changelog:
 	git-chglog -o CHANGELOG.md

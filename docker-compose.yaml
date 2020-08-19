@@ -45,6 +45,15 @@ services:
     environment:
       DIST: bionic
     command: make deb
+  nss_ubuntu20:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.ubuntu-20
+    volumes:
+      - .:/stns
+    environment:
+      DIST: focul
+    command: make deb
   nss_debian8:
     build:
       context: .
