@@ -52,7 +52,7 @@ services:
     volumes:
       - .:/stns
     environment:
-      DIST: focul
+      DIST: focal
     command: make deb
   nss_debian8:
     build:
