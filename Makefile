@@ -244,9 +244,9 @@ deb: source_for_deb ## Packaging for DEB
 SUPPORTOS=centos6 centos7 cetos8 ubuntu16 ubuntu18 ubuntu20 debian8 debian9
 pkg: ## Create some distribution packages
 	rm -rf builds && mkdir builds
-	for i in $(SUPPORTOS); do\
-	  docker-compose build nss_$$i \
-	  docker-compose run --rm -v `pwd`:/stns nss_$$i \
+	for i in $(SUPPORTOS); do \
+	  docker-compose build nss_$$i; \
+	  docker-compose run --rm -v `pwd`:/stns nss_$$i; \
 	done
 
 changelog:
