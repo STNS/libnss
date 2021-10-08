@@ -72,3 +72,12 @@ services:
     environment:
       DIST: stretch
     command: make deb
+  nss_debian11:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.debian-11
+    volumes:
+      - .:/stns
+    environment:
+      DIST: bullseye
+    command: make deb
