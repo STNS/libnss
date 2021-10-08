@@ -237,6 +237,7 @@ deb: source_for_deb ## Packaging for DEB
 		debuild -e DIST=$(DIST) -uc -us
 	cd $(STNS_DIR) && \
 		find . -name "*.deb" | sed -e 's/\(\(.*libnss-stns-v2.*\).deb\)/mv \1 \2.$(DIST).deb/g' | sh && \
+		mkdir -p /stns/builds && \
 		cp *.deb /stns/builds
 	rm -rf $(STNS_DIR)
 
