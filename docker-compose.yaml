@@ -1,14 +1,5 @@
 version: '3'
 services:
-  nss_centos8:
-    build:
-      context: .
-      dockerfile: dockerfiles/Dockerfile.centos-8
-    volumes:
-      - .:/stns
-    environment:
-      DIST: el8
-    command: make rpm
   nss_centos7:
     build:
       context: .
