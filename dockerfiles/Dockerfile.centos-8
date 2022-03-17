@@ -1,6 +1,6 @@
 FROM centos:8
 MAINTAINER pyama86 <www.kazu.com@gmail.com>
-
+RUN sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-Linux-*;
 RUN yum install -y glibc gcc make bzip2 unzip rpmdevtools epel-release && \
     yum install -y clang
 
