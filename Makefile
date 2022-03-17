@@ -242,7 +242,7 @@ deb: source_for_deb ## Packaging for DEB
 	rm -rf $(STNS_DIR)
 
 
-SUPPORTOS=centos6 centos7 centos8 ubuntu16 ubuntu18 ubuntu20 debian8 debian9 debian10 debian11
+SUPPORTOS=centos7 centos8 ubuntu16 ubuntu18 ubuntu20 debian8 debian9 debian10 debian11
 pkg: ## Create some distribution packages
 	rm -rf builds && mkdir builds
 	for i in $(SUPPORTOS); do \

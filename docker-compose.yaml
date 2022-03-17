@@ -18,15 +18,6 @@ services:
     environment:
       DIST: el7
     command: make rpm
-  nss_centos6:
-    build:
-      context: .
-      dockerfile: dockerfiles/Dockerfile.centos-6
-    volumes:
-      - .:/stns
-    environment:
-      DIST: el6
-    command: make rpm
   nss_ubuntu16:
     build:
       context: .
