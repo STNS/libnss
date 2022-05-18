@@ -18,15 +18,6 @@ services:
     environment:
       DIST: el7
     command: make rpm
-  nss_ubuntu16:
-    build:
-      context: .
-      dockerfile: dockerfiles/Dockerfile.ubuntu-16
-    volumes:
-      - .:/stns
-    environment:
-      DIST: xenial
-    command: make deb
   nss_ubuntu18:
     build:
       context: .
@@ -45,23 +36,14 @@ services:
     environment:
       DIST: focal
     command: make deb
-  nss_debian8:
+  nss_ubuntu22:
     build:
       context: .
-      dockerfile: dockerfiles/Dockerfile.debian-8
+      dockerfile: dockerfiles/Dockerfile.ubuntu-22
     volumes:
       - .:/stns
     environment:
-      DIST: jessie
-    command: make deb
-  nss_debian9:
-    build:
-      context: .
-      dockerfile: dockerfiles/Dockerfile.debian-9
-    volumes:
-      - .:/stns
-    environment:
-      DIST: stretch
+      DIST: jammy
     command: make deb
   nss_debian10:
     build:
