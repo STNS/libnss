@@ -22,7 +22,7 @@ CRITERION_VERSION=2.3.2
 SHUNIT_VERSION=2.1.6
 CURL_VERSION=7.71.1
 OPENSSL_VERSION=1.1.1g
-ZLIB_VERSION=1.2.11
+ZLIB_VERSION=1.2.12
 
 DIST ?= unknown
 STNSD_VERSION=0.0.1
@@ -242,7 +242,7 @@ deb: source_for_deb ## Packaging for DEB
 	rm -rf $(STNS_DIR)
 
 
-SUPPORTOS=centos7 centos8 ubuntu16 ubuntu18 ubuntu20 debian8 debian9 debian10 debian11
+SUPPORTOS=centos7 centos8 ubuntu18 ubuntu20 ubuntu22 debian10 debian11
 pkg: ## Create some distribution packages
 	rm -rf builds && mkdir builds
 	for i in $(SUPPORTOS); do \
