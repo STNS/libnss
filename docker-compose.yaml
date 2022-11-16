@@ -1,5 +1,14 @@
 version: '3'
 services:
+  nss_almalinux9:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.almalinux-9
+    volumes:
+      - .:/stns
+    environment:
+      DIST: el9
+    command: make rpm
   nss_centos8:
     build:
       context: .
