@@ -56,6 +56,7 @@ struct stns_conf_t {
   char *query_wrapper;
   char *chain_ssh_wrapper;
   char *http_proxy;
+  int http_location;
   char *cache_dir;
   char *tls_cert;
   char *tls_key;
