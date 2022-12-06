@@ -99,6 +99,7 @@ int stns_load_config(char *filename, stns_conf_t *c)
   GET_TOML_BYKEY(request_timeout, toml_rtoi, 10, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(request_retry, toml_rtoi, 3, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(request_locktime, toml_rtoi, 60, TOML_NULL_OR_INT);
+  GET_TOML_BYKEY(http_location, toml_rtob, 0, TOML_NULL_OR_INT);
 
   TRIM_SLASH(api_endpoint)
   TRIM_SLASH(cache_dir)
@@ -306,6 +307,9 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, c->ssl_verify);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, c->ssl_verify);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, STNS_VERSION_WITH_NAME);
+    if (c->http_location == 1) {
+      curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    }
     if (c->tls_cert != NULL && c->tls_key != NULL) {
       curl_easy_setopt(curl, CURLOPT_SSLCERT, c->tls_cert);
       curl_easy_setopt(curl, CURLOPT_SSLKEY, c->tls_key);
