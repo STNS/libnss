@@ -9,15 +9,6 @@ services:
     environment:
       DIST: el9
     command: make rpm
-  nss_centos8:
-    build:
-      context: .
-      dockerfile: dockerfiles/Dockerfile.centos-8
-    volumes:
-      - .:/stns
-    environment:
-      DIST: el8
-    command: make rpm
   nss_centos7:
     build:
       context: .
@@ -27,15 +18,6 @@ services:
     environment:
       DIST: el7
     command: make rpm
-  nss_ubuntu18:
-    build:
-      context: .
-      dockerfile: dockerfiles/Dockerfile.ubuntu-18
-    volumes:
-      - .:/stns
-    environment:
-      DIST: bionic
-    command: make deb
   nss_ubuntu20:
     build:
       context: .
