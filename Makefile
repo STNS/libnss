@@ -47,7 +47,7 @@ test: testdev ## Test with dependencies installation
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Testing$(RESET)"
 	mkdir -p /etc/stns/client/
 	echo 'api_endpoint = "https://httpbin.org"' > /etc/stns/client/stns.conf
-	service cache-stnsd restart
+	sudo service cache-stnsd restart
 	$(CC) -g3 -fsanitize=address -O0 -fno-omit-frame-pointer -I$(CURL_DIR)/include \
 	  stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c stns_test.c stns_group_test.c stns_shadow_test.c stns_passwd_test.c \
 		$(STATIC_LIBS) \
@@ -167,8 +167,8 @@ integration: testdev build install ## Run integration test
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Integration Testing$(RESET)"
 	mkdir -p /etc/stns/client
 	mkdir -p /etc/stns/server
-	cp test/integration_client.conf /etc/stns/client/stns.conf && service cache-stnsd restart
-	cp test/integration_server.conf /etc/stns/server/stns.conf && service stns restart
+	cp test/integration_client.conf /etc/stns/client/stns.conf && sudo service cache-stnsd restart
+	cp test/integration_server.conf /etc/stns/server/stns.conf && sudo service stns restart
 	bash -l -c "while ! nc -vz -w 1 127.0.0.1 1104 > /dev/null 2>&1; do sleep 1; echo 'sleeping'; done"
 	test -d /usr/lib/x86_64-linux-gnu && ln -sf /usr/lib/libnss_stns.so.2.0 /usr/lib/x86_64-linux-gnu/libnss_stns.so.2.0 || true
 	sed -i -e 's/^passwd:.*/passwd: files stns/g' /etc/nsswitch.conf
@@ -176,7 +176,7 @@ integration: testdev build install ## Run integration test
 	sed -i -e 's/^group:.*/group: files stns/g' /etc/nsswitch.conf
 	grep test /etc/sudoers || echo 'test ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 	test/integration_test.sh
-	echo "use_cached = true" >> /etc/stns/client/stns.conf && service cache-stnsd restart
+	echo "use_cached = true" >> /etc/stns/client/stns.conf && sudo service cache-stnsd restart
 	test/integration_test.sh
 
 install: install_lib install_key_wrapper ## Install stns
@@ -274,6 +274,6 @@ stnsd:
 	! test -e /etc/redhat-release || (! (rpm -qa |grep stnsd) && \
 	  curl -s -L -O https://github.com/STNS/cache-stnsd/releases/download/v$(STNSD_VERSION)/cache-stnsd-$(STNSD_VERSION)-1.x86_64.el8.rpm && \
 	  rpm -ivh cache-stnsd-$(STNSD_VERSION)-1.x86_64.el8.rpm) | true
-	service cache-stnsd start
+	sudo service cache-stnsd start
 
 .PHONY: test testdev build
