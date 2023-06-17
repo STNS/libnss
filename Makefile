@@ -7,7 +7,7 @@ LIBRARY=libnss_stns.so.2.0
 KEY_WRAPPER=stns-key-wrapper
 LINKS=libnss_stns.so.2 libnss_stns.so
 LD_SONAME=-Wl,-soname,libnss_stns.so.2
-VERSION = $(shell git describe --tags --abbrev=0|sed -e 's/v//g')
+VERSION = $(shell cat version)
 
 PREFIX=/usr
 LIBDIR=$(PREFIX)/lib64
@@ -241,9 +241,12 @@ deb: source_for_deb ## Packaging for DEB
 		cp *.deb /stns/builds
 	rm -rf $(STNS_DIR)
 
+.PHONY: version
+version:
+	@git describe --tags --abbrev=0|sed -e 's/v//g' > version
 
 SUPPORTOS=centos7 centos8 almalinux9 ubuntu20 ubuntu22 debian10 debian11
-pkg: ## Create some distribution packages
+pkg: version ## Create some distribution packages
 	rm -rf builds && mkdir builds
 	for i in $(SUPPORTOS); do \
 	  docker-compose build nss_$$i; \
