@@ -16,7 +16,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-build-
           ${{ runner.os }}-
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: test
       run: make test_on_docker
       env:
