@@ -108,6 +108,7 @@ curl: build_dir openssl
 	  --without-libidn && $(MAKE) && $(MAKE) install)
 
 criterion:  ## Installing dependencies for development
+	mkdir -p $(DIST_DIR)
 	test -f $(DIST_DIR)/criterion.tar.bz2 || curl -sL https://github.com/Snaipe/Criterion/releases/download/v$(CRITERION_VERSION)/criterion-v$(CRITERION_VERSION)-linux-x86_64.tar.bz2 -o $(DIST_DIR)/criterion.tar.bz2
 	test -d /usr/include/criterion || cd $(DIST_DIR); tar xf criterion.tar.bz2; cd ../
 	test -d /usr/include/criterion || (mv $(DIST_DIR)/criterion-v$(CRITERION_VERSION)/include/criterion /usr/include/criterion && mv $(DIST_DIR)/criterion-v$(CRITERION_VERSION)/lib/libcriterion.* $(LIBDIR)/)
