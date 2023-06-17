@@ -8,7 +8,6 @@ KEY_WRAPPER=stns-key-wrapper
 LINKS=libnss_stns.so.2 libnss_stns.so
 LD_SONAME=-Wl,-soname,libnss_stns.so.2
 VERSION = $(git describe --tags --abbrev=0|sed -e 's/v//g')
-VERSION = $(git describe --tags --abbrev=0)
 
 PREFIX=/usr
 LIBDIR=$(PREFIX)/lib64
