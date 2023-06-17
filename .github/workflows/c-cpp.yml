@@ -6,6 +6,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v3
     - name: Cache assets
       uses: actions/cache@v2
       with:
@@ -15,7 +16,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-build-
           ${{ runner.os }}-
-
     - uses: actions/checkout@v2
     - name: test
       run: make test_on_docker

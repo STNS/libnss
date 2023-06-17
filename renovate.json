@@ -1,0 +1,38 @@
+{
+  "extends": ["config:base"],
+  "automergeSchedule": [
+    "before 2am"
+  ],
+  "packageRules": [
+    {
+      "enabled": false,
+      "matchUpdateTypes": [
+        "digest"
+      ]
+    },
+    {
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true
+    }
+  ],
+  "regexManagers": [
+    {
+      "fileMatch": [
+        "^Makefile$"
+      ],
+      "matchStrings": ["CURL_VERSION=\"(?<currentValue>.*?)\""],
+      "depNameTemplate": "curl/curl",
+      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "fileMatch": [
+        "^Makefile$"
+      ],
+      "matchStrings": ["OPENSSL_VERSION=\"(?<currentValue>.*?)\""],
+      "depNameTemplate": "openssl/openssl",
+      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}",
+      "datasourceTemplate": "github-releases"
+    }
+  ]
+}
