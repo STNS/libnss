@@ -271,9 +271,7 @@ github_release: ## Create some distribution packages
 	ghr -u STNS --replace v$(VERSION) builds/
 
 stnsd:
-	! test -e /etc/lsb-release || (! (dpkg -l |grep stnsd) && \
-	  curl -s -L -O https://github.com/STNS/cache-stnsd/releases/download/v$(STNSD_VERSION)/cache-stnsd_$(STNSD_VERSION)-1_amd64.jammy.deb && \
-	  dpkg -i cache-stnsd_$(STNSD_VERSION)-1_amd64.jammy.deb) | true
+	(dpkg -l |grep stnsd) || (curl -s -L -O https://github.com/STNS/cache-stnsd/releases/download/v$(STNSD_VERSION)/cache-stnsd_$(STNSD_VERSION)-1_amd64.jammy.deb && sudo dpkg -i cache-stnsd_$(STNSD_VERSION)-1_amd64.jammy.deb)
 	sudo service cache-stnsd start
 
 .PHONY: test testdev build
