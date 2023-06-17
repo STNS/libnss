@@ -1,7 +1,7 @@
-FROM centos:7
+FROM ubuntu:jammy
 MAINTAINER pyama86 <www.kazu.com@gmail.com>
-RUN yum install -y sudo
-RUN curl -fsSL https://repo.stns.jp/scripts/yum-repo.sh | sh
-RUN yum install -q -y glibc gcc make wget bzip2 git vim epel-release clang stns-v2 initscripts nc libasan valgrind
+RUN apt update -qqy && apt install -qqy sudo curl
+RUN curl -fsSL https://repo.stns.jp/scripts/apt-repo.sh | sh
+RUN apt install -qqy build-essential make git vim stns-v2 netcat libasan5 valgrind finit-sysv
 RUN mkdir /stns
 WORKDIR /stns
