@@ -84,4 +84,4 @@ ddd" \
 }
 
 
-. /usr/include/shunit2/src/shunit2
+. /usr/include/shunit2/shunit2
