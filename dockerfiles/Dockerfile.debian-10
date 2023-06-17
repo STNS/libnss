@@ -1,4 +1,4 @@
-FROM debian:buster
+FROM debian:bullseye
 MAINTAINER pyama86 <www.kazu.com@gmail.com>
 
 RUN apt-get -qqy update && \
