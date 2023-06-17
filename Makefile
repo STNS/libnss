@@ -25,7 +25,7 @@ OPENSSL_VERSION=1.1.1g
 ZLIB_VERSION=1.2.13
 
 DIST ?= unknown
-STNSD_VERSION=0.0.1
+STNSD_VERSION=0.3.13
 
 DIST_DIR:=/stns/tmp/$(DIST)
 SRC_DIR:=$(DIST_DIR)/src
@@ -272,11 +272,8 @@ github_release: ## Create some distribution packages
 
 stnsd:
 	! test -e /etc/lsb-release || (! (dpkg -l |grep stnsd) && \
-	  curl -s -L -O https://github.com/STNS/cache-stnsd/releases/download/v$(STNSD_VERSION)/cache-stnsd_$(STNSD_VERSION)-1_amd64.xenial.deb && \
-	  dpkg -i cache-stnsd_$(STNSD_VERSION)-1_amd64.xenial.deb) | true
-	! test -e /etc/redhat-release || (! (rpm -qa |grep stnsd) && \
-	  curl -s -L -O https://github.com/STNS/cache-stnsd/releases/download/v$(STNSD_VERSION)/cache-stnsd-$(STNSD_VERSION)-1.x86_64.el8.rpm && \
-	  rpm -ivh cache-stnsd-$(STNSD_VERSION)-1.x86_64.el8.rpm) | true
+	  curl -s -L -O https://github.com/STNS/cache-stnsd/releases/download/v$(STNSD_VERSION)/cache-stnsd_$(STNSD_VERSION)-1_amd64.jammy.deb && \
+	  dpkg -i cache-stnsd_$(STNSD_VERSION)-1_amd64.jammy.deb) | true
 	sudo service cache-stnsd start
 
 .PHONY: test testdev build
