@@ -8,3 +8,4 @@ default.etcd
 .vagrant
 builds/*
 STNS
+version
