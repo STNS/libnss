@@ -247,7 +247,7 @@ Test(stns_request, http_request_with_cached)
   stns_response_t r;
   stns_request(&c, "user-agent", &r);
 
-  snprintf(expect_body, sizeof(expect_body), "{\n  \"user-agent\": \"%s\"\n}\n", "cache-stnsd/0.0.1");
+  snprintf(expect_body, sizeof(expect_body), "{\n  \"user-agent\": \"%s\"\n}\n", "libstns-go/0.0.1");
   cr_assert_str_eq(r.data, expect_body);
 }
 

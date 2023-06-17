@@ -18,10 +18,10 @@ BINDIR=$(PREFIX)/lib/stns
 BINSYMDIR=$(PREFIX)/local/bin/
 
 
-CRITERION_VERSION=2.3.2
-SHUNIT_VERSION=2.1.6
-CURL_VERSION=7.71.1
-OPENSSL_VERSION=1.1.1g
+CRITERION_VERSION=2.4.2
+SHUNIT_VERSION=2.1.8
+CURL_VERSION=8.1.2
+OPENSSL_VERSION=3.1.1
 ZLIB_VERSION=1.2.13
 
 DIST ?= unknown
@@ -74,6 +74,7 @@ openssl: build_dir zlib
 	test -f $(OPENSSL_DIR)/lib/libssl.a || (cd $(SRC_DIR)/openssl-$(OPENSSL_VERSION) && (make clean |true) && CFLAGS='$(LIBS_CFLAGS)' ./config \
 	  --prefix=$(OPENSSL_DIR) \
 	  --openssldir=$(OPENSSL_DIR) \
+	  --libdir=lib \
 	  no-shared \
 	  no-ssl3 \
 	  no-asm \
@@ -84,8 +85,7 @@ curl: build_dir openssl
 	test -d $(SRC_DIR)/curl-$(CURL_VERSION) || (curl -sL https://curl.haxx.se/download/curl-$(CURL_VERSION).tar.gz -o $(SRC_DIR)/curl-$(CURL_VERSION).tar.gz && cd $(SRC_DIR) && tar xf curl-$(CURL_VERSION).tar.gz)
 	test -f $(CURL_DIR)/lib/libcurl.a || (cd $(SRC_DIR)/curl-$(CURL_VERSION) && (make clean | true) && \
 	  LIBS="-ldl -lpthread" LDFLAGS="$(CURL_LDFLAGS)" CFLAGS='$(LIBS_CFLAGS)' ./configure \
-	  --with-ssl=$(OPENSSL_DIR) \
-	  --with-libssl-prefix=$(OPENSSL_DIR) \
+	  --with-openssl=$(OPENSSL_DIR) \
 	  --with-zlib=$(ZLIB_DIR) \
 	  --enable-libcurl-option \
 	  --disable-shared \
@@ -104,8 +104,8 @@ curl: build_dir openssl
 	  --disable-imap \
 	  --disable-smtp \
 	  --disable-gopher \
-	  --disable-smb \
-	  --without-libidn && $(MAKE) && $(MAKE) install)
+	  --disable-smb && \
+	  $(MAKE) && $(MAKE) install)
 
 criterion:  ## Installing dependencies for development
 	mkdir -p $(DIST_DIR)
