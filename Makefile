@@ -10,10 +10,7 @@ LD_SONAME=-Wl,-soname,libnss_stns.so.2
 VERSION = $(shell cat version)
 
 PREFIX=/usr
-LIBDIR=$(PREFIX)/lib64
-ifeq ($(wildcard $(LIBDIR)/.*),)
-LIBDIR=$(PREFIX)/lib
-endif
+LIBDIR ?= $(PREFIX)/lib64
 BINDIR=$(PREFIX)/lib/stns
 BINSYMDIR=$(PREFIX)/local/bin/
 
@@ -106,9 +103,6 @@ curl: build_dir openssl
 	  --disable-gopher \
 	  --disable-smb && \
 	  $(MAKE) && $(MAKE) install)
-
-clean:
-	rm -rf $(DIST_DIR)
 
 criterion:  ## Installing dependencies for development
 	mkdir -p $(DIST_DIR)
