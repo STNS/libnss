@@ -13,15 +13,13 @@
     {
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "automerge": true
+    },
+    {
+      "datasource": "docker",
+      "enabled": false
     }
   ],
   "regexManagers": [
-    {
-      "fileMatch": [
-        "^dockerfiles"
-      ],
-      "enabled": false
-    },
     {
       "fileMatch": [
         "^Makefile$"
