@@ -7,7 +7,7 @@ LIBRARY=libnss_stns.so.2.0
 KEY_WRAPPER=stns-key-wrapper
 LINKS=libnss_stns.so.2 libnss_stns.so
 LD_SONAME=-Wl,-soname,libnss_stns.so.2
-VERSION = $(shell git tag | sed 's/v//g' |sort --version-sort | tail -n1)
+VERSION = $(shell version)
 
 PREFIX=/usr
 LIBDIR=$(PREFIX)/lib64
