@@ -110,7 +110,7 @@ curl: build_dir openssl
 criterion:  ## Installing dependencies for development
 	mkdir -p $(DIST_DIR)
 	test -f $(DIST_DIR)/criterion.tar.xz || curl -sL https://github.com/Snaipe/Criterion/releases/download/v$(CRITERION_VERSION)/criterion-$(CRITERION_VERSION)-linux-x86_64.tar.xz -o $(DIST_DIR)/criterion.tar.xz
-	test -d /usr/include/criterion || cd $(DIST_DIR); tar xf criterion.tar.xz; cd ../
+	test -d /usr/include/criterion || (cd $(DIST_DIR) && tar xf criterion.tar.xz && cd ../)
 	test -d /usr/include/criterion || (mv $(DIST_DIR)/criterion-$(CRITERION_VERSION)/include/criterion /usr/include/criterion && mv $(DIST_DIR)/criterion-$(CRITERION_VERSION)/lib/libcriterion.* $(LIBDIR)/)
 	test -f $(DIST_DIR)/shunit2.tgz || curl -sL https://github.com/kward/shunit2/archive/refs/tags/v$(SHUNIT_VERSION).tar.gz -o $(DIST_DIR)/shunit2.tgz
 	cd $(DIST_DIR); tar xf shunit2.tgz; cd ../
