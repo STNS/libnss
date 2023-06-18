@@ -46,7 +46,7 @@ ci: curl test integration
 test: testdev ## Test with dependencies installation
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Testing$(RESET)"
 	mkdir -p /etc/stns/client/
-	echo 'api_endpoint = "https://httpbin.org"' > /etc/stns/client/stns.conf
+	echo 'api_endpoint = "http://httpbin"' > /etc/stns/client/stns.conf
 	sudo service cache-stnsd restart
 	$(CC) -g3 -fsanitize=address -O0 -fno-omit-frame-pointer -I$(CURL_DIR)/include \
 	  stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c stns_test.c stns_group_test.c stns_shadow_test.c stns_passwd_test.c \
@@ -264,8 +264,11 @@ changelog:
 
 docker:
 	docker rm -f libnss-stns | true
+	docker rm -f httpbin | true
+	docker network inspect libnss-stns || docker network create libnss-stns
 	docker build -f dockerfiles/Dockerfile -t libnss_develop .
-	docker run --privileged -d -e DIST=$(DIST) --name libnss-stns -v "`pwd`":/stns -it libnss_develop /sbin/init
+	docker run --network libnss-stns --privileged -d -e DIST=$(DIST) --name libnss-stns -v "`pwd`":/stns -it libnss_develop /sbin/init
+	docker run --network libnss-stns --rm --name httpbin -d kennethreitz/httpbin
 login: docker
 	docker exec -it libnss-stns /bin/bash
 

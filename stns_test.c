@@ -4,7 +4,7 @@
 stns_conf_t test_conf()
 {
   stns_conf_t c;
-  c.api_endpoint       = "https://httpbin.org";
+  c.api_endpoint       = "http://httpbin";
   c.http_proxy         = NULL;
   c.cache_dir          = "/var/cache/stns";
   c.cached_unix_socket = "/var/run/cache-stnsd.sock";
