@@ -246,8 +246,12 @@ deb: source_for_deb ## Packaging for DEB
 	rm -rf $(STNS_DIR)
 
 
+.PHONY: version
+version:
+	@git describe --tags --abbrev=0|sed -e 's/v//g' > version
+
 SUPPORTOS=centos7 almalinux9 ubuntu20 ubuntu22 debian10 debian11
-pkg: ## Create some distribution packages
+pkg: version ## Create some distribution packages
 	rm -rf builds && mkdir builds
 	git config --global --add safe.directory `pwd`
 	for i in $(SUPPORTOS); do \
