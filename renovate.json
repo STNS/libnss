@@ -15,11 +15,9 @@
       "automerge": true
     },
     {
-      "datasource": "docker",
-      "depNameList": ["docker.io"],
+      "matchDatasources": ["docker"],
       "enabled": false
     }
-
   ],
   "regexManagers": [
     {
