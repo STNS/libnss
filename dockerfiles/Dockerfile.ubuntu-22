@@ -4,7 +4,7 @@ MAINTAINER pyama86 <www.kazu.com@gmail.com>
 RUN apt-get -qqy update && \
     apt-get install -qqy tzdata curl && \
     apt-get install -qqy glibc-source gcc make \
-                        bzip2 unzip debhelper dh-make devscripts cdbs clang
+                        bzip2 unzip debhelper dh-make devscripts cdbs clang git
 
 ENV USER root
 RUN mkdir /stns
