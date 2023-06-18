@@ -11,8 +11,10 @@ VERSION = $(shell version)
 
 PREFIX=/usr
 LIBDIR=$(PREFIX)/lib64
-ifeq ($(wildcard $(LIBDIR)/.*),)
-LIBDIR=$(PREFIX)/lib
+
+FILE_COUNT := $(shell find $(LIBDIR) -type f | wc -l)
+ifeq ($(shell test $(FILE_COUNT) -le 2; echo $$?),0)
+	LIBDIR=$(PREFIX)/lib
 endif
 BINDIR=$(PREFIX)/lib/stns
 BINSYMDIR=$(PREFIX)/local/bin/
