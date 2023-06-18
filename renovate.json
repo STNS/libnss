@@ -18,6 +18,12 @@
   "regexManagers": [
     {
       "fileMatch": [
+        "^dockerfiles"
+      ],
+      "enabled": false
+    },
+    {
+      "fileMatch": [
         "^Makefile$"
       ],
       "matchStrings": ["CURL_VERSION=\"(?<currentValue>.*?)\""],
