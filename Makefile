@@ -10,7 +10,7 @@ LD_SONAME=-Wl,-soname,libnss_stns.so.2
 VERSION = $(shell cat version)
 
 PREFIX=/usr
-LIBDIR=$(PREFIX)/lib
+LIBDIR=$(PREFIX)/lib64
 ifeq ($(wildcard $(LIBDIR)/.*),)
 LIBDIR=$(PREFIX)/lib
 endif
