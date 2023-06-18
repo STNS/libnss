@@ -255,7 +255,6 @@ version:
 SUPPORTOS=centos7 almalinux9 ubuntu20 ubuntu22 debian10 debian11
 pkg: version ## Create some distribution packages
 	rm -rf builds && mkdir builds
-	git config --global --add safe.directory `pwd`
 	for i in $(SUPPORTOS); do \
 	  docker-compose build nss_$$i || exit 1; \
 	  docker-compose run --rm -v `pwd`:/stns nss_$$i || exit 1; \
