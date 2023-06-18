@@ -2,6 +2,7 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 env:
     COMPOSE_FILE: docker-compose.yaml
 name: Release
