@@ -27,8 +27,7 @@
       ],
       "matchStrings": ["CURL_VERSION=\"(?<currentValue>.*?)\""],
       "datasourceTemplate": "github-releases",
-      "depNameTemplate": "curl/curl",
-      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}"
+      "depNameTemplate": "curl/curl"
     },
     {
       "customType": "regex",
@@ -37,8 +36,7 @@
       ],
       "matchStrings": ["OPENSSL_VERSION=\"(?<currentValue>.*?)\""],
       "datasourceTemplate": "github-releases",
-      "depNameTemplate": "openssl/openssl",
-      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}"
+      "depNameTemplate": "openssl/openssl"
     }
   ]
 }
