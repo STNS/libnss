@@ -20,7 +20,7 @@
         "^Makefile$"
       ],
       "matchStrings": ["CURL_VERSION=(?<currentValue>.+)$"],
-      "datasourceTemplate": "github-releases",
+      "datasourceTemplate": "github-tags",
       "depNameTemplate": "curl/curl"
     },
     {
@@ -29,7 +29,7 @@
         "^Makefile$"
       ],
       "matchStrings": ["OPENSSL_VERSION=(?<currentValue>.*)$"],
-      "datasourceTemplate": "github-releases",
+      "datasourceTemplate": "github-tags",
       "depNameTemplate": "openssl/openssl"
     },
     {
@@ -38,7 +38,7 @@
         "^Makefile$"
       ],
       "matchStrings": ["ZLIB_VERSION=(?<currentValue>.*)$"],
-      "datasourceTemplate": "github-releases",
+      "datasourceTemplate": "github-tags",
       "depNameTemplate": "madler/zlib"
     }
   ]
