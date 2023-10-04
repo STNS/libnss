@@ -1,5 +1,4 @@
 {
-  "extends": ["config:base"],
   "automergeSchedule": [
     "before 2am"
   ],
@@ -27,7 +26,8 @@
       ],
       "matchStrings": ["CURL_VERSION=\"(?<currentValue>.*?)\""],
       "datasourceTemplate": "github-releases",
-      "depNameTemplate": "curl/curl"
+      "depNameTemplate": "curl/curl",
+      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}"
     },
     {
       "customType": "regex",
@@ -36,7 +36,8 @@
       ],
       "matchStrings": ["OPENSSL_VERSION=\"(?<currentValue>.*?)\""],
       "datasourceTemplate": "github-releases",
-      "depNameTemplate": "openssl/openssl"
+      "depNameTemplate": "openssl/openssl",
+      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}"
     }
   ]
 }
