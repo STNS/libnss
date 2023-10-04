@@ -1,21 +1,33 @@
 {
-  "extends": ["config:best-practices"],
+  "extends": [
+    "config:best-practices"
+  ],
   "automergeSchedule": [
     "before 2am"
   ],
   "packageRules": [
     {
-      "matchUpdateTypes": ["minor", "patch", "pin"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin"
+      ],
       "automerge": true
     },
     {
-      "matchDatasources": ["docker"],
+      "matchDatasources": [
+        "docker"
+      ],
       "enabled": false
     },
     {
-		"datasources": ["github-tags"],
-                "matchDepNames": ["curl/curl"],
-		"versioning": "regex:curl-(?<major>\\d+)\\_(?<minor>\\d+)\\_(?<patch>\\d+)$"
+      "matchDatasources": [
+        "github-tags"
+      ],
+      "matchDepNames": [
+        "curl/curl"
+      ],
+      "versioning": "regex:curl-(?<major>\\d+)\\_(?<minor>\\d+)\\_(?<patch>\\d+)$"
     }
   ],
   "customManagers": [
@@ -24,7 +36,9 @@
       "fileMatch": [
         "^Makefile$"
       ],
-      "matchStrings": ["CURL_VERSION=(?<currentValue>.+)"],
+      "matchStrings": [
+        "CURL_VERSION=(?<currentValue>.+)"
+      ],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "curl/curl",
       "extractVersionTemplate": "^curl-(?<version>.+)$"
@@ -34,7 +48,9 @@
       "fileMatch": [
         "^Makefile$"
       ],
-      "matchStrings": ["OPENSSL_VERSION=(?<currentValue>.*)"],
+      "matchStrings": [
+        "OPENSSL_VERSION=(?<currentValue>.*)"
+      ],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "openssl/openssl",
       "extractVersionTemplate": "^openssl-(?<version>.+)$"
@@ -44,7 +60,9 @@
       "fileMatch": [
         "^Makefile$"
       ],
-      "matchStrings": ["ZLIB_VERSION=(?<currentValue>.*)"],
+      "matchStrings": [
+        "ZLIB_VERSION=(?<currentValue>.*)"
+      ],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "madler/zlib",
       "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}"
