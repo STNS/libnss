@@ -25,7 +25,7 @@
       "fileMatch": [
         "^Makefile$"
       ],
-      "matchStrings": ["CURL_VERSION=(?<currentValue>.*?)"],
+      "matchStrings": ["CURL_VERSION=(?<currentValue>.+)$"],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "curl/curl",
       "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}"
@@ -35,7 +35,7 @@
       "fileMatch": [
         "^Makefile$"
       ],
-      "matchStrings": ["OPENSSL_VERSION=(?<currentValue>.*?)"],
+      "matchStrings": ["OPENSSL_VERSION=(?<currentValue>.*)$"],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "openssl/openssl",
       "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}"
@@ -45,7 +45,7 @@
       "fileMatch": [
         "^Makefile$"
       ],
-      "matchStrings": ["ZLIB_VERSION=(?<currentValue>.*?)"],
+      "matchStrings": ["ZLIB_VERSION=(?<currentValue>.*)$"],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "madler/zlib",
       "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}"
