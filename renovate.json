@@ -21,7 +21,8 @@
       ],
       "matchStrings": ["CURL_VERSION=(?<currentValue>.+)"],
       "datasourceTemplate": "github-tags",
-      "depNameTemplate": "curl/curl"
+      "depNameTemplate": "curl/curl",
+      "extractVersionTemplate": "regex:^curl-(?<major>\\d+?)_(?<minor>\\d+?)_(?<patch>\\d+?)$"
     },
     {
       "customType": "regex",
@@ -30,7 +31,8 @@
       ],
       "matchStrings": ["OPENSSL_VERSION=(?<currentValue>.*)"],
       "datasourceTemplate": "github-tags",
-      "depNameTemplate": "openssl/openssl"
+      "depNameTemplate": "openssl/openssl",
+      "extractVersionTemplate": "regex:^openssl-(?<major>\\d+?).(?<minor>\\d+?).(?<patch>\\d+?)$"
     },
     {
       "customType": "regex",
@@ -39,7 +41,8 @@
       ],
       "matchStrings": ["ZLIB_VERSION=(?<currentValue>.*)"],
       "datasourceTemplate": "github-tags",
-      "depNameTemplate": "madler/zlib"
+      "depNameTemplate": "madler/zlib",
+      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}"
     }
   ]
 }
