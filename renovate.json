@@ -11,6 +11,10 @@
     {
       "matchDatasources": ["docker"],
       "enabled": false
+    },
+    {
+      "packageNames": ["curl/curl"],
+      "extractVersion": "^curl-(?<major>\\d+?)_(?<minor>\\d+?)_(?<patch>\\d+?)$"
     }
   ],
   "customManagers": [
@@ -21,8 +25,7 @@
       ],
       "matchStrings": ["CURL_VERSION=(?<currentValue>.+)"],
       "datasourceTemplate": "github-tags",
-      "depNameTemplate": "curl/curl",
-      "extractVersionTemplate": "^curl-(?<major>\\d+?)_(?<minor>\\d+?)_(?<patch>\\d+?)$"
+      "depNameTemplate": "curl/curl"
     },
     {
       "customType": "regex",
