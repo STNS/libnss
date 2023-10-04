@@ -1,4 +1,5 @@
 {
+  "extends": ["config:base"],
   "automergeSchedule": [
     "before 2am"
   ],
