@@ -32,7 +32,7 @@
       "matchStrings": ["OPENSSL_VERSION=(?<currentValue>.*)"],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "openssl/openssl",
-      "extractVersionTemplate": "^openssl-(?<major>\\d+?).(?<minor>\\d+?).(?<patch>\\d+?)$"
+      "extractVersionTemplate": "^openssl-(?<version>.+)$"
     },
     {
       "customType": "regex",
