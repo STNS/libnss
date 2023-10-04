@@ -3,9 +3,6 @@
   "automergeSchedule": [
     "before 2am"
   ],
-  "enabledManagers": [
-    "regex"
-  ],
   "packageRules": [
     {
       "enabled": false,
@@ -22,24 +19,26 @@
       "enabled": false
     }
   ],
-  "regexManagers": [
+  "customManagers": [
     {
+      "customType": "regex",
       "fileMatch": [
         "^Makefile$"
       ],
       "matchStrings": ["CURL_VERSION=\"(?<currentValue>.*?)\""],
+      "datasourceTemplate": "github-releases",
       "depNameTemplate": "curl/curl",
-      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}",
-      "datasourceTemplate": "github-releases"
+      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}"
     },
     {
+      "customType": "regex",
       "fileMatch": [
         "^Makefile$"
       ],
       "matchStrings": ["OPENSSL_VERSION=\"(?<currentValue>.*?)\""],
+      "datasourceTemplate": "github-releases",
       "depNameTemplate": "openssl/openssl",
-      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}",
-      "datasourceTemplate": "github-releases"
+      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}"
     }
   ]
 }
