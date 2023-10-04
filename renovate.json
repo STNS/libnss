@@ -39,6 +39,16 @@
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "openssl/openssl",
       "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "^Makefile$"
+      ],
+      "matchStrings": ["ZLIB_VERSION=(?<currentValue>.*?)"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "madler/zlib",
+      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}"
     }
   ]
 }
