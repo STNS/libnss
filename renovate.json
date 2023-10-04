@@ -14,7 +14,7 @@
     },
     {
       "matchPackageNames": ["curl/curl"],
-      "versioning": "regex:^(?curl-(?<major>\\d+)_(?<minor>\\d+)_(?<patch>\\d+)?$"
+      "versioning": "regex:^curl-(?<major>\\d+)_(?<minor>\\d+)_(?<patch>\\d+)?$"
     }
   ],
   "customManagers": [
