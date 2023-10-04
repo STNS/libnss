@@ -11,10 +11,6 @@
     {
       "matchDatasources": ["docker"],
       "enabled": false
-    },
-    {
-      "packageNames": ["curl/curl"],
-      "extractVersion": "^curl-(?<major>\\d+?)_(?<minor>\\d+?)_(?<patch>\\d+?)$"
     }
   ],
   "customManagers": [
@@ -24,7 +20,7 @@
         "^Makefile$"
       ],
       "matchStrings": ["CURL_VERSION=(?<currentValue>.+)"],
-      "datasourceTemplate": "github-tags",
+      "datasourceTemplate": "github-releases",
       "depNameTemplate": "curl/curl"
     },
     {
