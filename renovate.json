@@ -13,9 +13,9 @@
       "enabled": false
     },
     {
-		"datasources": ["github-tags"],
-                "matchDepNames": ["curl/curl"],
-		"versioning": "regex:curl-(?<major>\\d+)\\_(?<minor>\\d+)\\_(?<patch>\\d+)$"
+      "datasources": ["github-tags"],
+      "matchDepNames": ["curl/curl"],
+      "versioning": "regex:(?<major>\\d+)\\_(?<minor>\\d+)\\_(?<patch>\\d+)$"
     }
   ],
   "customManagers": [
@@ -24,7 +24,7 @@
       "fileMatch": [
         "^Makefile$"
       ],
-      "matchStrings": ["CURL_VERSION=(?<currentValue>.+)"],
+      "matchStrings": ["CURL_VERSION_TAG=(?<currentValue>.+)"],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "curl/curl",
       "extractVersionTemplate": "^curl-(?<version>.+)$"
