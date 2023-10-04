@@ -5,13 +5,7 @@
   ],
   "packageRules": [
     {
-      "enabled": false,
-      "matchUpdateTypes": [
-        "digest"
-      ]
-    },
-    {
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "matchUpdateTypes": ["minor", "patch", "pin"],
       "automerge": true
     },
     {
@@ -27,8 +21,7 @@
       ],
       "matchStrings": ["CURL_VERSION=(?<currentValue>.+)$"],
       "datasourceTemplate": "github-releases",
-      "depNameTemplate": "curl/curl",
-      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}"
+      "depNameTemplate": "curl/curl"
     },
     {
       "customType": "regex",
@@ -37,8 +30,7 @@
       ],
       "matchStrings": ["OPENSSL_VERSION=(?<currentValue>.*)$"],
       "datasourceTemplate": "github-releases",
-      "depNameTemplate": "openssl/openssl",
-      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}"
+      "depNameTemplate": "openssl/openssl"
     },
     {
       "customType": "regex",
@@ -47,8 +39,7 @@
       ],
       "matchStrings": ["ZLIB_VERSION=(?<currentValue>.*)$"],
       "datasourceTemplate": "github-releases",
-      "depNameTemplate": "madler/zlib",
-      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}"
+      "depNameTemplate": "madler/zlib"
     }
   ]
 }
