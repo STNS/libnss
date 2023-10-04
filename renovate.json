@@ -11,6 +11,11 @@
     {
       "matchDatasources": ["docker"],
       "enabled": false
+    },
+    {
+		"datasources": ["github-tags"],
+                "matchDepNames": ["curl/curl"],
+		"versioning": "regex:curl-(?<major>\\d+)\\_(?<minor>\\d+)\\_(?<patch>\\d+)$"
     }
   ],
   "customManagers": [
