@@ -3,6 +3,9 @@
   "automergeSchedule": [
     "before 2am"
   ],
+  "enabledManagers": [
+    "regex"
+  ],
   "packageRules": [
     {
       "enabled": false,
