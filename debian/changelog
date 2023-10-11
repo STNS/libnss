@@ -1,3 +1,8 @@
+libnss-stns-v2 (2.6.4-1) jammy; urgency=high
+
+  * Update dependency curl/curl to v8_4_0
+
+
 libnss-stns-v2 (2.6.3-1) jammy; urgency=medium
 
   * update openssl and curl
