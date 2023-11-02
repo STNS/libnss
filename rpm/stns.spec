@@ -1,6 +1,6 @@
 Summary:          SimpleTomlNameService Nss Module
 Name:             libnss-stns-v2
-Version:          2.6.4
+Version:          2.6.5
 Release:          1
 License:          GPLv3
 URL:              https://github.com/STNS/STNS
@@ -61,6 +61,8 @@ sed -i "s/^IPAddressDeny=any/#IPAddressDeny=any/" /lib/systemd/system/systemd-lo
 %config(noreplace) /etc/stns/client/stns.conf
 
 %changelog
+* Thu Nov 02 2023 pyama86 <www.kazu.com@gmail.com> - 2.6.5-1
+-  Check User/Group Name Before Query
 * Sun Oct 11 2023 pyama86 <www.kazu.com@gmail.com> - 2.6.4-1
 -  Update dependency curl/curl to v8_4_0
 * Sun Jun 18 2023 pyama86 <www.kazu.com@gmail.com> - 2.6.3-1
