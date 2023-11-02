@@ -25,7 +25,7 @@ ZLIB_VERSION=1.3
 DIST ?= unknown
 STNSD_VERSION=0.3.13
 
-DIST_DIR:=/stns/tmp/$(DIST)
+DIST_DIR:=$(shell pwd)/tmp/$(DIST)
 SRC_DIR:=$(DIST_DIR)/src
 STNS_DIR:=$(DIST_DIR)/stns
 OPENSSL_DIR:=$(DIST_DIR)/openssl-$(OPENSSL_VERSION)

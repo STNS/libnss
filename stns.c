@@ -690,6 +690,72 @@ err:
   return 1;
 }
 
+int is_valid_username(const char *username) {
+    if (username == NULL)
+    {
+        return 1;
+    }
+    size_t len = strlen(username);
+
+    // Check the length.
+    if (len == 0 || len > MAX_USERNAME_LENGTH)
+    {
+        return 1;
+    }
+
+    // The first character must be a alpha.
+    if (!(username[0] >= 'a' && username[0] <= 'z'))
+    {
+        return 1;
+    }
+
+    // The rest characters can be only alpha, digit, dash or underscore.
+    for (size_t i = 1; i < len; i++)
+    {
+        if (!(username[i] >= 'a' && username[i] <= 'z') &&
+            !(username[i] >= '0' && username[i] <= '9') &&
+            username[i] != '-' && username[i] != '_')
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+int is_valid_groupname(const char *groupname)
+{
+    if (groupname == NULL)
+    {
+        return 1;
+    }
+    size_t len = strlen(groupname);
+
+    // Check the length.
+    if (len == 0 || len > MAX_GROUPNAME_LENGTH)
+    {
+        return 1;
+    }
+
+    // The first character must be a alpha.
+    if (!(groupname[0] >= 'a' && groupname[0] <= 'z'))
+    {
+        return 1;
+    }
+
+    // The rest characters can be only alpha, digit, dash or underscore.
+    for (size_t i = 1; i < len; i++)
+    {
+        if (!(groupname[i] >= 'a' && groupname[i] <= 'z') &&
+            !(groupname[i] >= '0' && groupname[i] <= '9') &&
+            groupname[i] != '-' && groupname[i] != '_')
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
 extern int pthread_mutex_retrylock(pthread_mutex_t *mutex)
 {
   int i   = 0;
