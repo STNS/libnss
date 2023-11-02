@@ -1,4 +1,4 @@
-libnss-stns-v2 (2.6.4-1) jammy; urgency=high
+libnss-stns-v2 (2.6.5-1) jammy; urgency=high
 
   * Check User/Group Name Before Query
 
