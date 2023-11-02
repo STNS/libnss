@@ -28,7 +28,8 @@
 #define STNS_HTTP_NOTFOUND 404L
 #define STNS_LOCK_RETRY 3
 #define STNS_LOCK_INTERVAL_MSEC 10
-
+#define MAX_USERNAME_LENGTH 32
+#define MAX_GROUPNAME_LENGTH 32
 typedef struct stns_response_t stns_response_t;
 struct stns_response_t {
   char *data;
@@ -91,7 +92,8 @@ extern void set_user_highest_id(int);
 extern void set_user_lowest_id(int);
 extern void set_group_highest_id(int);
 extern void set_group_lowest_id(int);
-
+extern int is_valid_username(const char *username);
+extern int is_valid_groupname(const char *username);
 #define STNS_ENSURE_BY(method_key, key_type, key_name, json_type, json_key, match_method, resource, ltype)             \
   enum nss_status ensure_##resource##_by_##method_key(char *data, stns_conf_t *c, key_type key_name,                   \
                                                       struct resource *rbuf, char *buf, size_t buflen, int *errnop)    \
@@ -329,6 +331,14 @@ extern void set_group_lowest_id(int);
       return 0;                                                                                                        \
     return 1;                                                                                                          \
   }
+
+#define USER_NAME_QUERY_AVAILABLE                                                                                        \
+  if (is_valid_username(name) != 0)                                                                                    \
+    return NSS_STATUS_NOTFOUND;
+
+#define GROUP_NAME_QUERY_AVAILABLE                                                                                       \
+  if (is_valid_groupname(name) != 0)                                                                                    \
+    return NSS_STATUS_NOTFOUND;
 
 #define USER_ID_QUERY_AVAILABLE                                                                                        \
   if (!stns_user_highest_query_available(uid) || !stns_user_lowest_query_available(uid))                               \
