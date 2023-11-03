@@ -128,7 +128,7 @@ extern int is_valid_groupname(const char *username);
 
 #define STNS_SET_DEFAULT_VALUE(buf, name, def)                                                                         \
   char buf[MAXBUF];                                                                                                    \
-  if (name != NULL && strlen(name) > 0) {                                                                              \
+  if (name != NULL && strnlen(name, STNS_MAX_BUFFER_SIZE) > 0) {                                                                              \
     strcpy(buf, name);                                                                                                 \
   } else {                                                                                                             \
     strcpy(buf, def);                                                                                                  \
@@ -166,7 +166,7 @@ extern int is_valid_groupname(const char *username);
   }
 
 #define SET_ATTRBUTE(type, name, attr)                                                                                 \
-  int name##_length = strlen(name) + 1;                                                                                \
+  int name##_length = strnlen(name, STNS_MAX_BUFFER_SIZE) + 1;                                                                                \
                                                                                                                        \
   if (buflen < name##_length) {                                                                                        \
     *errnop = ERANGE;                                                                                                  \
@@ -301,7 +301,7 @@ extern int is_valid_groupname(const char *username);
   }
 
 #define TOML_STR(m, empty)                                                                                             \
-  c->m = malloc(strlen(empty) + 1);                                                                                    \
+  c->m = malloc(strnlen(empty, STNS_MAX_BUFFER_SIZE) + 1);                                                                                    \
   strcpy(c->m, empty);
 #define TOML_NULL_OR_INT(m, empty) c->m = empty;
 

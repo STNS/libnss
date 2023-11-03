@@ -42,7 +42,7 @@ void readfile(char *file, char **result)
     if (fgets(buff, MAXBUF, fp) == NULL) {
       break;
     }
-    len = strlen(buff);
+    len = strnlen(buff, STNS_MAX_BUFFER_SIZE);
 
     if (*result == NULL) {
       break;

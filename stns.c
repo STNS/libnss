@@ -27,7 +27,7 @@ ID_QUERY_AVAILABLE(group, low, >)
 
 #define TRIM_SLASH(key)                                                                                                \
   if (c->key != NULL) {                                                                                                \
-    const int key##_len = strlen(c->key);                                                                              \
+    const int key##_len = strnlen(c->key, STNS_MAX_BUFFER_SIZE);                                                                              \
     if (key##_len > 0) {                                                                                               \
       if (c->key[key##_len - 1] == '/') {                                                                              \
         c->key[key##_len - 1] = '\0';                                                                                  \
@@ -194,7 +194,7 @@ static void trim(char *s)
 {
   int i, j;
 
-  for (i = strlen(s) - 1; i >= 0 && isspace(s[i]); i--)
+  for (i = strnlen(s, STNS_MAX_BUFFER_SIZE) - 1; i >= 0 && isspace(s[i]); i--)
     ;
   s[i + 1] = '\0';
   for (i = 0; isspace(s[i]); i++)
@@ -275,15 +275,15 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
 
   if (!c->cached_enable) {
     if (c->auth_token != NULL) {
-      len  = strlen(c->auth_token) + 22;
+      len  = strnlen(c->auth_token, STNS_MAX_BUFFER_SIZE) + 22;
       auth = (char *)malloc(len);
       snprintf(auth, len, "Authorization: token %s", c->auth_token);
     } else {
       auth = NULL;
     }
 
-    len = strlen(c->api_endpoint) + strlen(path) + 2;
-    url = (char *)malloc(strlen(c->api_endpoint) + strlen(path) + 2);
+    len = strnlen(c->api_endpoint, STNS_MAX_BUFFER_SIZE) + strnlen(path, STNS_MAX_BUFFER_SIZE) + 2;
+    url = (char *)malloc(strnlen(c->api_endpoint, STNS_MAX_BUFFER_SIZE) + strnlen(path, STNS_MAX_BUFFER_SIZE) + 2);
     snprintf(url, len, "%s/%s", c->api_endpoint, path);
 
     if (auth != NULL) {
@@ -294,13 +294,13 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
 
       int i, size = 0;
       for (i = 0; i < c->http_headers->size; i++) {
-        size += strlen(c->http_headers->headers[i].key) + strlen(c->http_headers->headers[i].value) + 3;
+        size += strnlen(c->http_headers->headers[i].key, STNS_MAX_BUFFER_SIZE) + strnlen(c->http_headers->headers[i].value, STNS_MAX_BUFFER_SIZE) + 3;
         if (in_headers == NULL)
           in_headers = (char *)malloc(size);
         else
           in_headers = (char *)realloc(in_headers, size);
 
-        snprintf(in_headers, strlen(c->http_headers->headers[i].key) + strlen(c->http_headers->headers[i].value) + 3,
+        snprintf(in_headers, strnlen(c->http_headers->headers[i].key, STNS_MAX_BUFFER_SIZE) + strnlen(c->http_headers->headers[i].value, STNS_MAX_BUFFER_SIZE) + 3,
                  "%s: %s", c->http_headers->headers[i].key, c->http_headers->headers[i].value);
         headers = curl_slist_append(headers, in_headers);
       }
@@ -334,8 +334,8 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
     }
   } else {
     curl_easy_setopt(curl, CURLOPT_UNIX_SOCKET_PATH, c->cached_unix_socket);
-    url = (char *)malloc(strlen("http://unix") + strlen(path) + 2);
-    snprintf(url, strlen("http://unix") + strlen(path) + 2, "%s/%s", "http://unix", path);
+    url = (char *)malloc(strnlen("http://unix", STNS_MAX_BUFFER_SIZE) + strnlen(path, STNS_MAX_BUFFER_SIZE) + 2);
+    snprintf(url, strnlen("http://unix", STNS_MAX_BUFFER_SIZE) + strnlen(path, STNS_MAX_BUFFER_SIZE) + 2, "%s/%s", "http://unix", path);
   }
   curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
@@ -460,7 +460,7 @@ int stns_import_file(char *file, stns_response_t *res)
   int len       = 0;
 
   while (fgets(buf, sizeof(buf), fp) != NULL) {
-    len = strlen(buf);
+    len = strnlen(buf, STNS_MAX_BUFFER_SIZE);
     if (!res->data) {
       res->data = (char *)malloc(len + 1);
     } else {
@@ -489,8 +489,8 @@ static void delete_cache_files(stns_conf_t *c)
 
   char *buf = malloc(1);
   while ((ent = readdir(dp)) != NULL) {
-    buf = (char *)realloc(buf, strlen(dir) + strlen(ent->d_name) + 2);
-    snprintf(buf, strlen(dir) + strlen(ent->d_name) + 2, "%s/%s", dir, ent->d_name);
+    buf = (char *)realloc(buf, strnlen(dir, STNS_MAX_BUFFER_SIZE) + strnlen(ent->d_name, STNS_MAX_BUFFER_SIZE) + 2);
+    snprintf(buf, strnlen(dir, STNS_MAX_BUFFER_SIZE) + strnlen(ent->d_name, STNS_MAX_BUFFER_SIZE) + 2, "%s/%s", dir, ent->d_name);
 
     if (stat(buf, &statbuf) == 0 && (statbuf.st_uid == geteuid() || geteuid() == 0)) {
       unsigned long diff = now - statbuf.st_mtime;
@@ -526,7 +526,7 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
     return CURLE_HTTP_RETURNED_ERROR;
   }
 
-  char *base = curl_escape(path, strlen(path));
+  char *base = curl_escape(path, strnlen(path, STNS_MAX_BUFFER_SIZE));
   char dpath[MAXBUF + 1];
   char fpath[MAXBUF * 2 + 2];
   snprintf(dpath, MAXBUF, "%s/%d", c->cache_dir, geteuid());
@@ -555,7 +555,7 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
         if (!stns_import_file(fpath, res)) {
           goto request;
         }
-        res->size = strlen(res->data);
+        res->size = strnlen(res->data, STNS_MAX_BUFFER_SIZE);
         return CURLE_OK;
       } else {
         delete_cache_files(c);
@@ -634,8 +634,8 @@ int stns_exec_cmd(char *cmd, char *arg, stns_response_t *r)
   syslog(LOG_ERR, "%s(stns)[L%d] before malloc", __func__, __LINE__);
 #endif
   if (arg != NULL) {
-    c = malloc(strlen(cmd) + strlen(arg) + 2);
-    snprintf(c, strlen(cmd) + strlen(arg) + 2, "%s %s", cmd, arg);
+    c = malloc(strnlen(cmd, STNS_MAX_BUFFER_SIZE) + strnlen(arg, STNS_MAX_BUFFER_SIZE) + 2);
+    snprintf(c, strnlen(cmd, STNS_MAX_BUFFER_SIZE) + strnlen(arg, STNS_MAX_BUFFER_SIZE) + 2, "%s %s", cmd, arg);
   } else {
     c = cmd;
   }
@@ -652,7 +652,7 @@ int stns_exec_cmd(char *cmd, char *arg, stns_response_t *r)
   int len       = 0;
 
   while (fgets(buf, sizeof(buf), fp) != NULL) {
-    len = strlen(buf);
+    len = strnlen(buf, STNS_MAX_BUFFER_SIZE);
 #ifdef DEBUG
     syslog(LOG_ERR, "%s(stns)[L%d] before malloc", __func__, __LINE__);
 #endif
@@ -692,7 +692,7 @@ int is_valid_username(const char *username) {
     {
         return 1;
     }
-    size_t len = strlen(username);
+    size_t len = strnlen(username, STNS_MAX_BUFFER_SIZE);
 
     // Check the length.
     if (len == 0 || len > MAX_USERNAME_LENGTH)
@@ -726,7 +726,7 @@ int is_valid_groupname(const char *groupname)
     {
         return 1;
     }
-    size_t len = strlen(groupname);
+    size_t len = strnlen(groupname, STNS_MAX_BUFFER_SIZE);
 
     // Check the length.
     if (len == 0 || len > MAX_GROUPNAME_LENGTH)
