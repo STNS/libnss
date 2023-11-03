@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "conf path too long\n");
         return -1;
       }
-      strncpy(conf_path, optarg, len);
+      conf_path = optarg;
       break;
     default:
       break;
