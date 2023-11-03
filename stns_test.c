@@ -37,7 +37,7 @@ void readfile(char *file, char **result)
     return;
   }
 
-  total   = 0;
+  total = 0;
   for (;;) {
     if (fgets(buff, MAXBUF, fp) == NULL) {
       break;
@@ -152,7 +152,7 @@ Test(stns_request, wrapper_request_ok)
   c.cache         = 0;
 
   r.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
-  res = stns_request(&c, "users?name=test", &r);
+  res    = stns_request(&c, "users?name=test", &r);
   cr_assert_str_eq(r.data, "ok\n");
   cr_assert_eq(res, 0);
   free(r.data);
@@ -168,7 +168,7 @@ Test(stns_request, wrapper_request_ng)
   c.query_wrapper = "test/dummy_arg.sh";
 
   r.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
-  res = stns_request(&c, NULL, &r);
+  res    = stns_request(&c, NULL, &r);
   cr_assert_eq(res, 22);
   free(r.data);
 }
@@ -190,7 +190,7 @@ Test(stns_request, http_request_with_header)
   c.request_timeout = 3;
   c.request_retry   = 3;
   c.auth_token      = NULL;
-  r.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
+  r.data            = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
   stns_request(&c, "headers", &r);
 
   cr_assert(strstr(r.data, "\"Test-Key1\": \"test_value1\""));
@@ -216,7 +216,7 @@ Test(stns_exec_cmd, ok)
 {
   char expect_body[1024];
   stns_response_t r;
-  r.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
+  r.data  = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
   int ret = stns_exec_cmd("test/dummy.sh", "users?name=test", &r);
 
   cr_assert_eq(ret, 0);
@@ -270,39 +270,43 @@ Test(stns_request, http_request_notfound_with_cached)
   free(r.data);
 }
 
-Test(username_validation, valid_usernames) {
-    cr_assert(is_valid_username("username") == 0);
-    cr_assert(is_valid_username("user-name") == 0);
-    cr_assert(is_valid_username("username1") == 0);
+Test(username_validation, valid_usernames)
+{
+  cr_assert(is_valid_username("username") == 0);
+  cr_assert(is_valid_username("user-name") == 0);
+  cr_assert(is_valid_username("username1") == 0);
 }
 
-Test(username_validation, invalid_usernames) {
-    cr_assert(is_valid_username("Username") == 1); // contains uppercase
-    cr_assert(is_valid_username("username!") == 1); // contains special char
-    cr_assert(is_valid_username("1username") == 1); // starts with digit
-    cr_assert(is_valid_username("") == 1); // empty string
-    cr_assert(is_valid_username(NULL) == 1); // NULL
-    char long_username[MAX_USERNAME_LENGTH + 2];
-    memset(long_username, 'a', sizeof(long_username) - 1);
-    long_username[sizeof(long_username) - 1] = '\0';
-    cr_assert(is_valid_username(long_username) == 1); // too long
+Test(username_validation, invalid_usernames)
+{
+  cr_assert(is_valid_username("Username") == 1);  // contains uppercase
+  cr_assert(is_valid_username("username!") == 1); // contains special char
+  cr_assert(is_valid_username("1username") == 1); // starts with digit
+  cr_assert(is_valid_username("") == 1);          // empty string
+  cr_assert(is_valid_username(NULL) == 1);        // NULL
+  char long_username[MAX_USERNAME_LENGTH + 2];
+  memset(long_username, 'a', sizeof(long_username) - 1);
+  long_username[sizeof(long_username) - 1] = '\0';
+  cr_assert(is_valid_username(long_username) == 1); // too long
 }
 
-Test(groupname_validation, valid_groupnames) {
-    cr_assert(is_valid_groupname("groupname") == 0);
-    cr_assert(is_valid_groupname("group-name") == 0);
-    cr_assert(is_valid_groupname("groupname1") == 0);
+Test(groupname_validation, valid_groupnames)
+{
+  cr_assert(is_valid_groupname("groupname") == 0);
+  cr_assert(is_valid_groupname("group-name") == 0);
+  cr_assert(is_valid_groupname("groupname1") == 0);
 }
 
-Test(groupname_validation, invalid_groupnames) {
-    cr_assert(is_valid_groupname("Groupname") == 1); // contains uppercase
-    cr_assert(is_valid_groupname("groupname!") == 1); // contains special char
-    cr_assert(is_valid_groupname("1groupname") == 1); // starts with digit
-    cr_assert(is_valid_groupname("") == 1); // empty string
-    cr_assert(is_valid_groupname(NULL) == 1); // NULL
-    // generate an overly long groupname
-    char long_groupname[MAX_GROUPNAME_LENGTH + 2];
-    memset(long_groupname, 'a', sizeof(long_groupname) - 1);
-    long_groupname[sizeof(long_groupname) - 1] = '\0';
-    cr_assert(is_valid_groupname(long_groupname) == 1); // too long
+Test(groupname_validation, invalid_groupnames)
+{
+  cr_assert(is_valid_groupname("Groupname") == 1);  // contains uppercase
+  cr_assert(is_valid_groupname("groupname!") == 1); // contains special char
+  cr_assert(is_valid_groupname("1groupname") == 1); // starts with digit
+  cr_assert(is_valid_groupname("") == 1);           // empty string
+  cr_assert(is_valid_groupname(NULL) == 1);         // NULL
+  // generate an overly long groupname
+  char long_groupname[MAX_GROUPNAME_LENGTH + 2];
+  memset(long_groupname, 'a', sizeof(long_groupname) - 1);
+  long_groupname[sizeof(long_groupname) - 1] = '\0';
+  cr_assert(is_valid_groupname(long_groupname) == 1); // too long
 }

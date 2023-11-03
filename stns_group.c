@@ -37,7 +37,7 @@ pthread_mutex_t grent_mutex = PTHREAD_MUTEX_INITIALIZER;
     if (user == NULL) {                                                                                                \
       continue;                                                                                                        \
     }                                                                                                                  \
-    int user_length = strnlen(user, STNS_MAX_BUFFER_SIZE) + 1;                                                                                \
+    int user_length = strnlen(user, STNS_MAX_BUFFER_SIZE) + 1;                                                         \
     if (buflen < user_length) {                                                                                        \
       *errnop = ERANGE;                                                                                                \
       pthread_mutex_unlock(&grent_mutex);                                                                              \

@@ -128,7 +128,7 @@ extern int is_valid_groupname(const char *username);
 
 #define STNS_SET_DEFAULT_VALUE(buf, name, def)                                                                         \
   char buf[MAXBUF];                                                                                                    \
-  if (name != NULL && strnlen(name, STNS_MAX_BUFFER_SIZE) > 0) {                                                                              \
+  if (name != NULL && strnlen(name, STNS_MAX_BUFFER_SIZE) > 0) {                                                       \
     strcpy(buf, name);                                                                                                 \
   } else {                                                                                                             \
     strcpy(buf, def);                                                                                                  \
@@ -147,7 +147,7 @@ extern int is_valid_groupname(const char *username);
       return NSS_STATUS_UNAVAIL;                                                                                       \
     query_available;                                                                                                   \
     snprintf(url, sizeof(url), format, value id_shift);                                                                \
-    r.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE); \
+    r.data      = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);                                                            \
     curl_result = stns_request(&c, url, &r);                                                                           \
                                                                                                                        \
     if (curl_result != CURLE_OK) {                                                                                     \
@@ -166,7 +166,7 @@ extern int is_valid_groupname(const char *username);
   }
 
 #define SET_ATTRBUTE(type, name, attr)                                                                                 \
-  int name##_length = strnlen(name, STNS_MAX_BUFFER_SIZE) + 1;                                                                                \
+  int name##_length = strnlen(name, STNS_MAX_BUFFER_SIZE) + 1;                                                         \
                                                                                                                        \
   if (buflen < name##_length) {                                                                                        \
     *errnop = ERANGE;                                                                                                  \
@@ -184,11 +184,11 @@ extern int is_valid_groupname(const char *username);
     if (pthread_mutex_retrylock(&type##ent_mutex) != 0)                                                                \
       return NSS_STATUS_UNAVAIL;                                                                                       \
                                                                                                                        \
-    if (entries != NULL || entry_idx != 0) {                                                                                             \
+    if (entries != NULL || entry_idx != 0) {                                                                           \
       json_value_free(entries);                                                                                        \
     }                                                                                                                  \
-    entry_idx        = 0;                                                                                              \
-    entries = NULL;                                                                                                    \
+    entry_idx = 0;                                                                                                     \
+    entries   = NULL;                                                                                                  \
                                                                                                                        \
     JSON_Value *root = json_parse_string(data);                                                                        \
     if (root == NULL) {                                                                                                \
@@ -211,7 +211,7 @@ extern int is_valid_groupname(const char *username);
     if (stns_load_config(STNS_CONFIG_FILE, &c) != 0)                                                                   \
       return NSS_STATUS_UNAVAIL;                                                                                       \
                                                                                                                        \
-    r.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE); \
+    r.data      = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);                                                            \
     curl_result = stns_request(&c, #query, &r);                                                                        \
     if (curl_result != CURLE_OK) {                                                                                     \
       free(r.data);                                                                                                    \
@@ -232,11 +232,11 @@ extern int is_valid_groupname(const char *username);
   {                                                                                                                    \
     if (pthread_mutex_retrylock(&type##ent_mutex) != 0)                                                                \
       return NSS_STATUS_UNAVAIL;                                                                                       \
-    if (entries != NULL || entry_idx != 0) {                                                                                             \
+    if (entries != NULL || entry_idx != 0) {                                                                           \
       json_value_free(entries);                                                                                        \
-    } \
+    }                                                                                                                  \
     entry_idx = 0;                                                                                                     \
-    entries = NULL;                                                                                                    \
+    entries   = NULL;                                                                                                  \
     pthread_mutex_unlock(&type##ent_mutex);                                                                            \
     return NSS_STATUS_SUCCESS;                                                                                         \
   }                                                                                                                    \
@@ -301,7 +301,7 @@ extern int is_valid_groupname(const char *username);
   }
 
 #define TOML_STR(m, empty)                                                                                             \
-  c->m = malloc(strnlen(empty, STNS_MAX_BUFFER_SIZE) + 1);                                                                                    \
+  c->m = malloc(strnlen(empty, STNS_MAX_BUFFER_SIZE) + 1);                                                             \
   strcpy(c->m, empty);
 #define TOML_NULL_OR_INT(m, empty) c->m = empty;
 
@@ -340,12 +340,12 @@ extern int is_valid_groupname(const char *username);
     return 1;                                                                                                          \
   }
 
-#define USER_NAME_QUERY_AVAILABLE                                                                                        \
+#define USER_NAME_QUERY_AVAILABLE                                                                                      \
   if (is_valid_username(name) != 0)                                                                                    \
     return NSS_STATUS_NOTFOUND;
 
-#define GROUP_NAME_QUERY_AVAILABLE                                                                                       \
-  if (is_valid_groupname(name) != 0)                                                                                    \
+#define GROUP_NAME_QUERY_AVAILABLE                                                                                     \
+  if (is_valid_groupname(name) != 0)                                                                                   \
     return NSS_STATUS_NOTFOUND;
 
 #define USER_ID_QUERY_AVAILABLE                                                                                        \
