@@ -283,4 +283,6 @@ parson:
 		mv /tmp/parson/parson.c ./
 cleanup:
 	rm -rf /var/cache/stns
+flawfinder:
+	ls stns*c |grep -v test | xargs flawfinder
 .PHONY: test testdev build parson
