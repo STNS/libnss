@@ -11,6 +11,7 @@ int main(int argc, char *argv[])
   char *keys      = NULL;
   char *conf_path = NULL;
   int ret;
+  int len;
   signal(SIGPIPE, SIG_IGN);
 
   /* Flawfinder: ignore */
@@ -19,7 +20,7 @@ int main(int argc, char *argv[])
       break;
     switch (ret) {
     case 'c':
-      int len = strnlen(optarg, MAXBUF) + 1;
+      len = strnlen(optarg, MAXBUF) + 1;
       if (len >= MAXBUF) {
         fprintf(stderr, "conf path too long\n");
         return -1;
