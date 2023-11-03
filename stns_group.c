@@ -43,7 +43,7 @@ pthread_mutex_t grent_mutex = PTHREAD_MUTEX_INITIALIZER;
       pthread_mutex_unlock(&grent_mutex);                                                                              \
       return NSS_STATUS_TRYAGAIN;                                                                                      \
     }                                                                                                                  \
-    strcpy(next_member, user);                                                                                         \
+    strncpy(next_member, user, user_length);                                                                           \
     rbuf->gr_mem[i] = next_member;                                                                                     \
     next_member += user_length;                                                                                        \
     buflen -= user_length;                                                                                             \

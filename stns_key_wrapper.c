@@ -13,12 +13,18 @@ int main(int argc, char *argv[])
   int ret;
   signal(SIGPIPE, SIG_IGN);
 
+  /* Flawfinder: ignore */
   while ((ret = getopt(argc, argv, "c:")) != -1) {
     if (ret == -1)
       break;
     switch (ret) {
     case 'c':
-      conf_path = optarg;
+      int len = strnlen(optarg, MAXBUF) + 1;
+      if (len >= MAXBUF) {
+        fprintf(stderr, "conf path too long\n");
+        return -1;
+      }
+      strncpy(conf_path, optarg, len);
       break;
     default:
       break;
@@ -38,8 +44,12 @@ int main(int argc, char *argv[])
   if (ret != 0)
     return -1;
 
+  if (strnlen(argv[optind], MAX_USERNAME_LENGTH) >= MAX_USERNAME_LENGTH) {
+    fprintf(stderr, "user name too long\n");
+    return -1;
+  }
   snprintf(url, sizeof(url), "users?name=%s", argv[optind]);
-  r.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
+  r.data      = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
   curl_result = stns_request(&c, url, &r);
   if (curl_result != CURLE_OK) {
     fprintf(stderr, "http request failed user: %s\n", argv[optind]);
@@ -102,7 +112,8 @@ int main(int argc, char *argv[])
     if (stns_exec_cmd(c.chain_ssh_wrapper, argv[optind], &cr) == 0) {
       key_size = cr.size;
       keys     = (char *)realloc(keys, key_size + strnlen(keys, STNS_MAX_BUFFER_SIZE) + 1);
-      strcpy(&(keys[size]), cr.data);
+      int len  = strnlen(cr.data, STNS_MAX_BUFFER_SIZE);
+      strncpy(&(keys[size]), cr.data, len + 1);
       size += key_size;
     }
     free(cr.data);

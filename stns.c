@@ -478,7 +478,7 @@ int stns_import_file(char *file, stns_response_t *res)
     } else {
       res->data = (char *)realloc(res->data, total_len + len + 1);
     }
-    strcpy(res->data + total_len, buf);
+    strncpy(res->data + total_len, buf, len + 1);
     total_len += len;
   }
   fclose(fp);
@@ -656,6 +656,7 @@ int stns_exec_cmd(char *cmd, char *arg, stns_response_t *r)
   syslog(LOG_ERR, "%s(stns)[L%d] after malloc", __func__, __LINE__);
 #endif
 
+  /* Flawfinder: ignore */
   if ((fp = popen(c, "r")) == NULL) {
     goto err;
   }
@@ -675,7 +676,7 @@ int stns_exec_cmd(char *cmd, char *arg, stns_response_t *r)
 #ifdef DEBUG
     syslog(LOG_ERR, "%s(stns)[L%d] after malloc", __func__, __LINE__);
 #endif
-    strcpy(r->data + total_len, buf);
+    strncpy(r->data + total_len, buf, len + 1);
     total_len += len;
   }
   pclose(fp);

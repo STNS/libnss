@@ -268,6 +268,7 @@ login: docker
 
 test_on_docker: docker
 	docker exec -t libnss-stns make test
+	docker exec -t libnss-stns make flawfinder
 	docker exec -t libnss-stns make integration
 
 github_release: ## Create some distribution packages
@@ -283,6 +284,7 @@ parson:
 		mv /tmp/parson/parson.c ./
 cleanup:
 	rm -rf /var/cache/stns
+	rm -rf /var/tmp/.stns.lock
 flawfinder:
-	ls stns*c |grep -v test | xargs flawfinder
+	ls stns*c |grep -v test | xargs flawfinder --error-level 3 --minlevel 3
 .PHONY: test testdev build parson
