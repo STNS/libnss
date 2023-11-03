@@ -759,11 +759,17 @@ extern int pthread_mutex_retrylock(pthread_mutex_t *mutex)
 {
   int i   = 0;
   int ret = 0;
+  struct timespec ts;
+  ts.tv_sec  = STNS_LOCK_INTERVAL_MSEC / 1000;
+  ts.tv_nsec = (STNS_LOCK_INTERVAL_MSEC % 1000) * 1000000;
+
   for (;;) {
     ret = pthread_mutex_trylock(mutex);
     if (ret == 0 || i >= STNS_LOCK_RETRY)
       break;
-    usleep(STNS_LOCK_INTERVAL_MSEC * 1000);
+
+    nanosleep(&ts, NULL);
+
     i++;
   }
   return ret;
