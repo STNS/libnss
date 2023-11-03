@@ -7,7 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <dirent.h>
-
+#include <fcntl.h>
 pthread_mutex_t user_mutex  = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t group_mutex = PTHREAD_MUTEX_INITIALIZER;
 int highest_user_id         = 0;
@@ -27,7 +27,7 @@ ID_QUERY_AVAILABLE(group, low, >)
 
 #define TRIM_SLASH(key)                                                                                                \
   if (c->key != NULL) {                                                                                                \
-    const int key##_len = strlen(c->key);                                                                              \
+    const int key##_len = strnlen(c->key, STNS_MAX_BUFFER_SIZE);                                                       \
     if (key##_len > 0) {                                                                                               \
       if (c->key[key##_len - 1] == '/') {                                                                              \
         c->key[key##_len - 1] = '\0';                                                                                  \
@@ -47,7 +47,11 @@ static void stns_force_create_cache_dir(stns_conf_t *c)
     if (stat(path, &statBuf) != 0) {
       mkdir(path, S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO);
     } else if ((S_ISVTX & statBuf.st_mode) == 0) {
-      chmod(path, S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO);
+      int fd = open(path, O_RDONLY);
+      if (fd != -1) {
+        fchmod(fd, S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO);
+        close(fd);
+      }
     }
     umask(um);
   }
@@ -194,7 +198,7 @@ static void trim(char *s)
 {
   int i, j;
 
-  for (i = strlen(s) - 1; i >= 0 && isspace(s[i]); i--)
+  for (i = strnlen(s, STNS_MAX_BUFFER_SIZE) - 1; i >= 0 && isspace(s[i]); i--)
     ;
   s[i + 1] = '\0';
   for (i = 0; isspace(s[i]); i++)
@@ -243,7 +247,9 @@ static size_t response_callback(void *buffer, size_t size, size_t nmemb, void *u
     return 0;
   }
 
-  res->data = (char *)realloc(res->data, res->size + segsize + 1);
+  if (res->size + segsize + 1 > STNS_DEFAULT_BUFFER_SIZE) {
+    res->data = (char *)realloc(res->data, res->size + segsize + 1);
+  }
 
   if (res->data) {
     memcpy(&(res->data[res->size]), buffer, segsize);
@@ -273,15 +279,15 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
 
   if (!c->cached_enable) {
     if (c->auth_token != NULL) {
-      len  = strlen(c->auth_token) + 22;
+      len  = strnlen(c->auth_token, STNS_MAX_BUFFER_SIZE) + 22;
       auth = (char *)malloc(len);
       snprintf(auth, len, "Authorization: token %s", c->auth_token);
     } else {
       auth = NULL;
     }
 
-    len = strlen(c->api_endpoint) + strlen(path) + 2;
-    url = (char *)malloc(strlen(c->api_endpoint) + strlen(path) + 2);
+    len = strnlen(c->api_endpoint, STNS_MAX_BUFFER_SIZE) + strnlen(path, STNS_MAX_BUFFER_SIZE) + 2;
+    url = (char *)malloc(strnlen(c->api_endpoint, STNS_MAX_BUFFER_SIZE) + strnlen(path, STNS_MAX_BUFFER_SIZE) + 2);
     snprintf(url, len, "%s/%s", c->api_endpoint, path);
 
     if (auth != NULL) {
@@ -292,13 +298,16 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
 
       int i, size = 0;
       for (i = 0; i < c->http_headers->size; i++) {
-        size += strlen(c->http_headers->headers[i].key) + strlen(c->http_headers->headers[i].value) + 3;
+        size += strnlen(c->http_headers->headers[i].key, STNS_MAX_BUFFER_SIZE) +
+                strnlen(c->http_headers->headers[i].value, STNS_MAX_BUFFER_SIZE) + 3;
         if (in_headers == NULL)
           in_headers = (char *)malloc(size);
         else
           in_headers = (char *)realloc(in_headers, size);
 
-        snprintf(in_headers, strlen(c->http_headers->headers[i].key) + strlen(c->http_headers->headers[i].value) + 3,
+        snprintf(in_headers,
+                 strnlen(c->http_headers->headers[i].key, STNS_MAX_BUFFER_SIZE) +
+                     strnlen(c->http_headers->headers[i].value, STNS_MAX_BUFFER_SIZE) + 3,
                  "%s: %s", c->http_headers->headers[i].key, c->http_headers->headers[i].value);
         headers = curl_slist_append(headers, in_headers);
       }
@@ -332,8 +341,9 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
     }
   } else {
     curl_easy_setopt(curl, CURLOPT_UNIX_SOCKET_PATH, c->cached_unix_socket);
-    url = (char *)malloc(strlen("http://unix") + strlen(path) + 2);
-    snprintf(url, strlen("http://unix") + strlen(path) + 2, "%s/%s", "http://unix", path);
+    url = (char *)malloc(strnlen("http://unix", STNS_MAX_BUFFER_SIZE) + strnlen(path, STNS_MAX_BUFFER_SIZE) + 2);
+    snprintf(url, strnlen("http://unix", STNS_MAX_BUFFER_SIZE) + strnlen(path, STNS_MAX_BUFFER_SIZE) + 2, "%s/%s",
+             "http://unix", path);
   }
   curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
@@ -361,7 +371,6 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
     if (code != 404)
       syslog(LOG_ERR, "%s(stns)[L%d] http request failed: %s code:%ld", __func__, __LINE__, curl_easy_strerror(result),
              code);
-    res->data        = NULL;
     res->size        = 0;
     res->status_code = code;
     if (code != 0)
@@ -441,7 +450,11 @@ void stns_export_file(char *dir, char *file, char *data)
 
   mode_t um = {0};
   um        = umask(0);
-  chmod(file, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IROTH);
+  int fd    = open(file, O_RDONLY);
+  if (fd != -1) {
+    fchmod(fd, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IROTH);
+    close(fd);
+  }
   umask(um);
 }
 
@@ -459,13 +472,13 @@ int stns_import_file(char *file, stns_response_t *res)
   int len       = 0;
 
   while (fgets(buf, sizeof(buf), fp) != NULL) {
-    len = strlen(buf);
+    len = strnlen(buf, STNS_MAX_BUFFER_SIZE);
     if (!res->data) {
       res->data = (char *)malloc(len + 1);
     } else {
       res->data = (char *)realloc(res->data, total_len + len + 1);
     }
-    strcpy(res->data + total_len, buf);
+    strncpy(res->data + total_len, buf, len + 1);
     total_len += len;
   }
   fclose(fp);
@@ -488,8 +501,9 @@ static void delete_cache_files(stns_conf_t *c)
 
   char *buf = malloc(1);
   while ((ent = readdir(dp)) != NULL) {
-    buf = (char *)realloc(buf, strlen(dir) + strlen(ent->d_name) + 2);
-    snprintf(buf, strlen(dir) + strlen(ent->d_name) + 2, "%s/%s", dir, ent->d_name);
+    buf = (char *)realloc(buf, strnlen(dir, STNS_MAX_BUFFER_SIZE) + strnlen(ent->d_name, STNS_MAX_BUFFER_SIZE) + 2);
+    snprintf(buf, strnlen(dir, STNS_MAX_BUFFER_SIZE) + strnlen(ent->d_name, STNS_MAX_BUFFER_SIZE) + 2, "%s/%s", dir,
+             ent->d_name);
 
     if (stat(buf, &statbuf) == 0 && (statbuf.st_uid == geteuid() || geteuid() == 0)) {
       unsigned long diff = now - statbuf.st_mtime;
@@ -518,7 +532,6 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
 {
   CURLcode result;
   int retry_count  = c->request_retry;
-  res->data        = (char *)malloc(sizeof(char));
   res->size        = 0;
   res->status_code = (long)200;
 
@@ -526,7 +539,7 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
     return CURLE_HTTP_RETURNED_ERROR;
   }
 
-  char *base = curl_escape(path, strlen(path));
+  char *base = curl_escape(path, strnlen(path, STNS_MAX_BUFFER_SIZE));
   char dpath[MAXBUF + 1];
   char fpath[MAXBUF * 2 + 2];
   snprintf(dpath, MAXBUF, "%s/%d", c->cache_dir, geteuid());
@@ -555,7 +568,7 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
         if (!stns_import_file(fpath, res)) {
           goto request;
         }
-        res->size = strlen(res->data);
+        res->size = strnlen(res->data, STNS_MAX_BUFFER_SIZE);
         return CURLE_OK;
       } else {
         delete_cache_files(c);
@@ -623,7 +636,6 @@ int stns_exec_cmd(char *cmd, char *arg, stns_response_t *r)
   FILE *fp;
   char *c;
 
-  r->data        = NULL;
   r->size        = 0;
   r->status_code = (long)200;
 
@@ -635,8 +647,8 @@ int stns_exec_cmd(char *cmd, char *arg, stns_response_t *r)
   syslog(LOG_ERR, "%s(stns)[L%d] before malloc", __func__, __LINE__);
 #endif
   if (arg != NULL) {
-    c = malloc(strlen(cmd) + strlen(arg) + 2);
-    snprintf(c, strlen(cmd) + strlen(arg) + 2, "%s %s", cmd, arg);
+    c = malloc(strnlen(cmd, STNS_MAX_BUFFER_SIZE) + strnlen(arg, STNS_MAX_BUFFER_SIZE) + 2);
+    snprintf(c, strnlen(cmd, STNS_MAX_BUFFER_SIZE) + strnlen(arg, STNS_MAX_BUFFER_SIZE) + 2, "%s %s", cmd, arg);
   } else {
     c = cmd;
   }
@@ -644,6 +656,7 @@ int stns_exec_cmd(char *cmd, char *arg, stns_response_t *r)
   syslog(LOG_ERR, "%s(stns)[L%d] after malloc", __func__, __LINE__);
 #endif
 
+  /* Flawfinder: ignore */
   if ((fp = popen(c, "r")) == NULL) {
     goto err;
   }
@@ -653,19 +666,17 @@ int stns_exec_cmd(char *cmd, char *arg, stns_response_t *r)
   int len       = 0;
 
   while (fgets(buf, sizeof(buf), fp) != NULL) {
-    len = strlen(buf);
+    len = strnlen(buf, STNS_MAX_BUFFER_SIZE);
 #ifdef DEBUG
     syslog(LOG_ERR, "%s(stns)[L%d] before malloc", __func__, __LINE__);
 #endif
-    if (r->data) {
+    if (total_len > STNS_DEFAULT_BUFFER_SIZE) {
       r->data = (char *)realloc(r->data, total_len + len + 1);
-    } else {
-      r->data = (char *)malloc(total_len + len + 1);
     }
 #ifdef DEBUG
     syslog(LOG_ERR, "%s(stns)[L%d] after malloc", __func__, __LINE__);
 #endif
-    strcpy(r->data + total_len, buf);
+    strncpy(r->data + total_len, buf, len + 1);
     total_len += len;
   }
   pclose(fp);
@@ -690,81 +701,76 @@ err:
   return 1;
 }
 
-int is_valid_username(const char *username) {
-    if (username == NULL)
-    {
-        return 1;
-    }
-    size_t len = strlen(username);
+int is_valid_username(const char *username)
+{
+  if (username == NULL) {
+    return 1;
+  }
+  size_t len = strnlen(username, STNS_MAX_BUFFER_SIZE);
 
-    // Check the length.
-    if (len == 0 || len > MAX_USERNAME_LENGTH)
-    {
-        return 1;
-    }
+  // Check the length.
+  if (len == 0 || len > MAX_USERNAME_LENGTH) {
+    return 1;
+  }
 
-    // The first character must be a alpha.
-    if (!(username[0] >= 'a' && username[0] <= 'z'))
-    {
-        return 1;
-    }
+  // The first character must be a alpha.
+  if (!(username[0] >= 'a' && username[0] <= 'z')) {
+    return 1;
+  }
 
-    // The rest characters can be only alpha, digit, dash or underscore.
-    for (size_t i = 1; i < len; i++)
-    {
-        if (!(username[i] >= 'a' && username[i] <= 'z') &&
-            !(username[i] >= '0' && username[i] <= '9') &&
-            username[i] != '-' && username[i] != '_')
-        {
-            return 1;
-        }
+  // The rest characters can be only alpha, digit, dash or underscore.
+  for (size_t i = 1; i < len; i++) {
+    if (!(username[i] >= 'a' && username[i] <= 'z') && !(username[i] >= '0' && username[i] <= '9') &&
+        username[i] != '-' && username[i] != '_') {
+      return 1;
     }
+  }
 
-    return 0;
+  return 0;
 }
 
 int is_valid_groupname(const char *groupname)
 {
-    if (groupname == NULL)
-    {
-        return 1;
-    }
-    size_t len = strlen(groupname);
+  if (groupname == NULL) {
+    return 1;
+  }
+  size_t len = strnlen(groupname, STNS_MAX_BUFFER_SIZE);
 
-    // Check the length.
-    if (len == 0 || len > MAX_GROUPNAME_LENGTH)
-    {
-        return 1;
-    }
+  // Check the length.
+  if (len == 0 || len > MAX_GROUPNAME_LENGTH) {
+    return 1;
+  }
 
-    // The first character must be a alpha.
-    if (!(groupname[0] >= 'a' && groupname[0] <= 'z'))
-    {
-        return 1;
-    }
+  // The first character must be a alpha.
+  if (!(groupname[0] >= 'a' && groupname[0] <= 'z')) {
+    return 1;
+  }
 
-    // The rest characters can be only alpha, digit, dash or underscore.
-    for (size_t i = 1; i < len; i++)
-    {
-        if (!(groupname[i] >= 'a' && groupname[i] <= 'z') &&
-            !(groupname[i] >= '0' && groupname[i] <= '9') &&
-            groupname[i] != '-' && groupname[i] != '_')
-        {
-            return 1;
-        }
+  // The rest characters can be only alpha, digit, dash or underscore.
+  for (size_t i = 1; i < len; i++) {
+    if (!(groupname[i] >= 'a' && groupname[i] <= 'z') && !(groupname[i] >= '0' && groupname[i] <= '9') &&
+        groupname[i] != '-' && groupname[i] != '_') {
+      return 1;
     }
+  }
 
-    return 0;
+  return 0;
 }
 extern int pthread_mutex_retrylock(pthread_mutex_t *mutex)
 {
   int i   = 0;
   int ret = 0;
+  struct timespec ts;
+  ts.tv_sec  = STNS_LOCK_INTERVAL_MSEC / 1000;
+  ts.tv_nsec = (STNS_LOCK_INTERVAL_MSEC % 1000) * 1000000;
+
   for (;;) {
     ret = pthread_mutex_trylock(mutex);
     if (ret == 0 || i >= STNS_LOCK_RETRY)
       break;
-    usleep(STNS_LOCK_INTERVAL_MSEC * 1000);
+
+    nanosleep(&ts, NULL);
+
     i++;
   }
   return ret;

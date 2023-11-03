@@ -33,10 +33,12 @@ int main(void)
   c.negative_cache_ttl = 1;
   c.use_cached         = 0;
 
+  r->data = (char *)malloc(sizeof(char));
   stns_request(&c, "get?example", &r);
   free(r.data);
   sleep(2);
   // deleted by thread
+  r->data = (char *)malloc(sizeof(char));
   stns_request(&c, "get?notfound", &r);
   free(r.data);
   return 0;

@@ -37,13 +37,13 @@ pthread_mutex_t grent_mutex = PTHREAD_MUTEX_INITIALIZER;
     if (user == NULL) {                                                                                                \
       continue;                                                                                                        \
     }                                                                                                                  \
-    int user_length = strlen(user) + 1;                                                                                \
+    int user_length = strnlen(user, STNS_MAX_BUFFER_SIZE) + 1;                                                         \
     if (buflen < user_length) {                                                                                        \
       *errnop = ERANGE;                                                                                                \
       pthread_mutex_unlock(&grent_mutex);                                                                              \
       return NSS_STATUS_TRYAGAIN;                                                                                      \
     }                                                                                                                  \
-    strcpy(next_member, user);                                                                                         \
+    strncpy(next_member, user, user_length);                                                                           \
     rbuf->gr_mem[i] = next_member;                                                                                     \
     next_member += user_length;                                                                                        \
     buflen -= user_length;                                                                                             \
