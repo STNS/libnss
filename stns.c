@@ -243,7 +243,9 @@ static size_t response_callback(void *buffer, size_t size, size_t nmemb, void *u
     return 0;
   }
 
-  res->data = (char *)realloc(res->data, res->size + segsize + 1);
+  if(res->size + segsize + 1 > STNS_DEFAULT_BUFFER_SIZE) {
+    res->data = (char *)realloc(res->data, res->size + segsize + 1);
+  }
 
   if (res->data) {
     memcpy(&(res->data[res->size]), buffer, segsize);
@@ -361,7 +363,6 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
     if (code != 404)
       syslog(LOG_ERR, "%s(stns)[L%d] http request failed: %s code:%ld", __func__, __LINE__, curl_easy_strerror(result),
              code);
-    res->data        = NULL;
     res->size        = 0;
     res->status_code = code;
     if (code != 0)
@@ -518,7 +519,6 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
 {
   CURLcode result;
   int retry_count  = c->request_retry;
-  res->data        = (char *)malloc(sizeof(char));
   res->size        = 0;
   res->status_code = (long)200;
 
@@ -623,7 +623,6 @@ int stns_exec_cmd(char *cmd, char *arg, stns_response_t *r)
   FILE *fp;
   char *c;
 
-  r->data        = NULL;
   r->size        = 0;
   r->status_code = (long)200;
 
@@ -657,10 +656,8 @@ int stns_exec_cmd(char *cmd, char *arg, stns_response_t *r)
 #ifdef DEBUG
     syslog(LOG_ERR, "%s(stns)[L%d] before malloc", __func__, __LINE__);
 #endif
-    if (r->data) {
+    if(total_len > STNS_DEFAULT_BUFFER_SIZE) {
       r->data = (char *)realloc(r->data, total_len + len + 1);
-    } else {
-      r->data = (char *)malloc(total_len + len + 1);
     }
 #ifdef DEBUG
     syslog(LOG_ERR, "%s(stns)[L%d] after malloc", __func__, __LINE__);

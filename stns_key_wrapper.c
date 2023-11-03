@@ -39,9 +39,11 @@ int main(int argc, char *argv[])
     return -1;
 
   snprintf(url, sizeof(url), "users?name=%s", argv[optind]);
+  r.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
   curl_result = stns_request(&c, url, &r);
   if (curl_result != CURLE_OK) {
     fprintf(stderr, "http request failed user: %s\n", argv[optind]);
+    free(r.data);
     stns_unload_config(&c);
     return -1;
   }
@@ -96,6 +98,7 @@ int main(int argc, char *argv[])
 
   if (c.chain_ssh_wrapper != NULL) {
     stns_response_t cr;
+    cr.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
     if (stns_exec_cmd(c.chain_ssh_wrapper, argv[optind], &cr) == 0) {
       key_size = cr.size;
       keys     = (char *)realloc(keys, key_size + strlen(keys) + 1);
@@ -107,7 +110,6 @@ int main(int argc, char *argv[])
 
   fprintf(stdout, "%s\n", keys);
   free(keys);
-  free(r.data);
   json_value_free(root);
   stns_unload_config(&c);
   return 0;

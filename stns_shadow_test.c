@@ -9,6 +9,7 @@ Test(ensure_spwd_by_name, ok)
   stns_conf_t c;
   stns_response_t r;
 
+  json = malloc(MAXBUF);
   readfile(f, &json);
   code = ensure_spwd_by_name(json, &c, "user1", &spbuf, buffer, MAXBUF, 0);
   cr_assert_eq(code, NSS_STATUS_SUCCESS);
@@ -30,6 +31,8 @@ Test(ensure_spwd_by_name, ok)
   strcpy(n, "");
   code = ensure_spwd_by_name(n, &c, "user3", &spbuf, buffer, MAXBUF, 0);
   cr_assert_eq(code, NSS_STATUS_UNAVAIL);
+  free(json);
+  free(n);
 }
 
 Test(ensure_spwd_by_uid, ok)
@@ -43,6 +46,7 @@ Test(ensure_spwd_by_uid, ok)
   stns_response_t r;
   c.uid_shift = 0;
 
+  json = malloc(MAXBUF);
   readfile(f, &json);
   code = ensure_spwd_by_uid(json, &c, 1, &spbuf, buffer, MAXBUF, 0);
   cr_assert_eq(code, NSS_STATUS_SUCCESS);
@@ -64,6 +68,8 @@ Test(ensure_spwd_by_uid, ok)
   strcpy(n, "");
   code = ensure_spwd_by_uid(n, &c, 3, &spbuf, buffer, MAXBUF, 0);
   cr_assert_eq(code, NSS_STATUS_UNAVAIL);
+  free(json);
+  free(n);
 }
 
 Test(inner_nss_stns_setspent, ok)
@@ -78,6 +84,7 @@ Test(inner_nss_stns_setspent, ok)
 
   c.uid_shift = 0;
   c.gid_shift = 0;
+  json = malloc(MAXBUF);
   readfile(f, &json);
   code = inner_nss_stns_setspent(json, &c);
   cr_assert_eq(code, NSS_STATUS_SUCCESS);
@@ -87,6 +94,8 @@ Test(inner_nss_stns_setspent, ok)
   code = inner_nss_stns_setspent(n, &c);
   cr_assert_eq(code, NSS_STATUS_UNAVAIL);
   _nss_stns_endspent();
+  free(n);
+  free(json);
 }
 
 Test(inner_nss_stns_getspent_r, ok)
@@ -100,6 +109,7 @@ Test(inner_nss_stns_getspent_r, ok)
   stns_conf_t c;
   stns_response_t r;
 
+  json = malloc(MAXBUF);
   readfile(f, &json);
   code = inner_nss_stns_setspent(json, &c);
   cr_assert_eq(code, NSS_STATUS_SUCCESS);
@@ -131,4 +141,5 @@ Test(inner_nss_stns_getspent_r, ok)
   code = inner_nss_stns_getspent_r(&c, &spbuf, buffer, MAXBUF, &errnop);
   cr_assert_eq(code, NSS_STATUS_NOTFOUND);
   _nss_stns_endspent();
+  free(json);
 }

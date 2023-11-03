@@ -38,18 +38,12 @@ void readfile(char *file, char **result)
   }
 
   total   = 0;
-  *result = NULL;
   for (;;) {
     if (fgets(buff, MAXBUF, fp) == NULL) {
       break;
     }
     len = strlen(buff);
 
-    if (!*result) {
-      *result = (char *)malloc(total + len + 1);
-    } else {
-      *result = realloc(*result, total + len + 1);
-    }
     if (*result == NULL) {
       break;
     }
@@ -94,10 +88,12 @@ Test(stns_request, http_request)
   char expect_body[1024];
   stns_conf_t c = test_conf();
   stns_response_t r;
+  r.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
   stns_request(&c, "user-agent", &r);
 
   snprintf(expect_body, sizeof(expect_body), "{\n  \"user-agent\": \"%s\"\n}\n", STNS_VERSION_WITH_NAME);
   cr_assert_str_eq(r.data, expect_body);
+  free(r.data);
 }
 
 Test(stns_request, http_cache)
@@ -116,15 +112,18 @@ Test(stns_request, http_cache)
   c.cached_enable      = 0;
 
   mkdir("/var/cache/stns/", S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO);
+  r.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
   stns_request(&c, "get?notfound", &r);
   cr_assert_eq(stat(path, &st), -1);
   free(r.data);
 
+  r.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
   stns_request(&c, "get?example", &r);
-  free(r.data);
   cr_assert_eq(stat(path, &st), 0);
+  free(r.data);
   sleep(2);
 
+  r.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
   stns_request(&c, "get?notfound", &r);
   cr_assert_eq(stat(path, &st), -1);
   free(r.data);
@@ -137,6 +136,7 @@ Test(stns_request, http_notfound)
   stns_response_t r;
   c.cache = 0;
 
+  r.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
   cr_assert_eq(stns_request(&c, "status/404", &r), CURLE_HTTP_RETURNED_ERROR);
   free(r.data);
 }
@@ -151,6 +151,7 @@ Test(stns_request, wrapper_request_ok)
   c.cache_dir     = "/var/cache/stns";
   c.cache         = 0;
 
+  r.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
   res = stns_request(&c, "users?name=test", &r);
   cr_assert_str_eq(r.data, "ok\n");
   cr_assert_eq(res, 0);
@@ -166,6 +167,7 @@ Test(stns_request, wrapper_request_ng)
   c.cache         = 0;
   c.query_wrapper = "test/dummy_arg.sh";
 
+  r.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
   res = stns_request(&c, NULL, &r);
   cr_assert_eq(res, 22);
   free(r.data);
@@ -188,6 +190,7 @@ Test(stns_request, http_request_with_header)
   c.request_timeout = 3;
   c.request_retry   = 3;
   c.auth_token      = NULL;
+  r.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
   stns_request(&c, "headers", &r);
 
   cr_assert(strstr(r.data, "\"Test-Key1\": \"test_value1\""));
@@ -212,12 +215,13 @@ Test(stns_request_available, ok)
 Test(stns_exec_cmd, ok)
 {
   char expect_body[1024];
-  stns_response_t result;
-  int r = stns_exec_cmd("test/dummy.sh", "users?name=test", &result);
+  stns_response_t r;
+  r.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
+  int ret = stns_exec_cmd("test/dummy.sh", "users?name=test", &r);
 
-  cr_assert_eq(r, 0);
-  cr_expect_str_eq(result.data, "aaabbbccc\nddd\n");
-  free(result.data);
+  cr_assert_eq(ret, 0);
+  cr_expect_str_eq(r.data, "aaabbbccc\nddd\n");
+  free(r.data);
 }
 
 Test(query_available, ok)
@@ -245,10 +249,12 @@ Test(stns_request, http_request_with_cached)
   c.use_cached    = 1;
   c.cached_enable = 1;
   stns_response_t r;
+  r.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
   stns_request(&c, "user-agent", &r);
 
   snprintf(expect_body, sizeof(expect_body), "{\n  \"user-agent\": \"%s\"\n}\n", "libstns-go/0.0.1");
   cr_assert_str_eq(r.data, expect_body);
+  free(r.data);
 }
 
 Test(stns_request, http_request_notfound_with_cached)
@@ -259,6 +265,7 @@ Test(stns_request, http_request_notfound_with_cached)
   c.cached_enable = 1;
   stns_response_t r;
 
+  r.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
   cr_assert_eq(stns_request(&c, "status/404", &r), CURLE_HTTP_RETURNED_ERROR);
   free(r.data);
 }

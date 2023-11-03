@@ -22,6 +22,7 @@
 #define STNS_VERSION_WITH_NAME "stns/" STNS_VERSION
 // 10MB
 #define STNS_MAX_BUFFER_SIZE (10 * 1024 * 1024)
+#define STNS_DEFAULT_BUFFER_SIZE (16 * 1024)
 #define STNS_CONFIG_FILE "/etc/stns/client/stns.conf"
 #define MAXBUF 1024
 #define STNS_LOCK_FILE "/var/tmp/.stns.lock"
@@ -146,6 +147,7 @@ extern int is_valid_groupname(const char *username);
       return NSS_STATUS_UNAVAIL;                                                                                       \
     query_available;                                                                                                   \
     snprintf(url, sizeof(url), format, value id_shift);                                                                \
+    r.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE); \
     curl_result = stns_request(&c, url, &r);                                                                           \
                                                                                                                        \
     if (curl_result != CURLE_OK) {                                                                                     \
@@ -182,8 +184,12 @@ extern int is_valid_groupname(const char *username);
     if (pthread_mutex_retrylock(&type##ent_mutex) != 0)                                                                \
       return NSS_STATUS_UNAVAIL;                                                                                       \
                                                                                                                        \
-    entries          = NULL;                                                                                           \
+    if (entries != NULL || entry_idx != 0) {                                                                                             \
+      json_value_free(entries);                                                                                        \
+    }                                                                                                                  \
     entry_idx        = 0;                                                                                              \
+    entries = NULL;                                                                                                    \
+                                                                                                                       \
     JSON_Value *root = json_parse_string(data);                                                                        \
     if (root == NULL) {                                                                                                \
       pthread_mutex_unlock(&type##ent_mutex);                                                                          \
@@ -205,6 +211,7 @@ extern int is_valid_groupname(const char *username);
     if (stns_load_config(STNS_CONFIG_FILE, &c) != 0)                                                                   \
       return NSS_STATUS_UNAVAIL;                                                                                       \
                                                                                                                        \
+    r.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE); \
     curl_result = stns_request(&c, #query, &r);                                                                        \
     if (curl_result != CURLE_OK) {                                                                                     \
       free(r.data);                                                                                                    \
@@ -225,9 +232,10 @@ extern int is_valid_groupname(const char *username);
   {                                                                                                                    \
     if (pthread_mutex_retrylock(&type##ent_mutex) != 0)                                                                \
       return NSS_STATUS_UNAVAIL;                                                                                       \
-    entry_idx = 0;                                                                                                     \
-    if (entry_idx != 0)                                                                                                \
+    if (entries != NULL || entry_idx != 0) {                                                                                             \
       json_value_free(entries);                                                                                        \
+    } \
+    entry_idx = 0;                                                                                                     \
     entries = NULL;                                                                                                    \
     pthread_mutex_unlock(&type##ent_mutex);                                                                            \
     return NSS_STATUS_SUCCESS;                                                                                         \

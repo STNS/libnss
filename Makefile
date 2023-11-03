@@ -41,12 +41,12 @@ CURL_LDFLAGS := -L$(OPENSSL_DIR)/lib $(LIBS_CFLAGS)
 MAKE=make -j4
 default: build
 ci: curl test integration
-test: testdev ## Test with dependencies installation
+test: cleanup testdev ## Test with dependencies installation
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Testing$(RESET)"
 	mkdir -p /etc/stns/client/
 	echo 'api_endpoint = "http://httpbin"' > /etc/stns/client/stns.conf
 	sudo service cache-stnsd restart
-	$(CC) -g3 -fsanitize=address -O0 -fno-omit-frame-pointer -I$(CURL_DIR)/include \
+	ASAN_OPTIONS=detect_leaks=1:exitcode=1:abort_on_error=true $(CC) -g3 -fsanitize=address -O0 -fno-omit-frame-pointer -I$(CURL_DIR)/include \
 	  stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c stns_test.c stns_group_test.c stns_shadow_test.c stns_passwd_test.c \
 		$(STATIC_LIBS) \
 		-lcriterion \
@@ -162,7 +162,7 @@ key_wrapper_build: build_dir ## Build key wrapper
 		-ldl \
 		-lrt
 
-integration: testdev build install ## Run integration test
+integration: cleanup testdev build install ## Run integration test
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Integration Testing$(RESET)"
 	mkdir -p /etc/stns/client
 	mkdir -p /etc/stns/server
@@ -277,4 +277,10 @@ stnsd:
 	(dpkg -l |grep stnsd) || (curl -s -L -O https://github.com/STNS/cache-stnsd/releases/download/v$(STNSD_VERSION)/cache-stnsd_$(STNSD_VERSION)-1_amd64.jammy.deb && sudo dpkg -i cache-stnsd_$(STNSD_VERSION)-1_amd64.jammy.deb)
 	sudo service cache-stnsd start
 
-.PHONY: test testdev build
+parson:
+	rm -rf /tmp/parson && git clone https://github.com/kgabis/parson.git /tmp/parson && \
+		mv /tmp/parson/parson.h ./ && \
+		mv /tmp/parson/parson.c ./
+cleanup:
+	rm -rf /var/cache/stns
+.PHONY: test testdev build parson
