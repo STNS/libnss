@@ -275,11 +275,11 @@ Test(username_validation, valid_usernames)
   cr_assert(is_valid_username("username") == 0);
   cr_assert(is_valid_username("user-name") == 0);
   cr_assert(is_valid_username("username1") == 0);
+  cr_assert(is_valid_username("Username") == 0);
 }
 
 Test(username_validation, invalid_usernames)
 {
-  cr_assert(is_valid_username("Username") == 1);  // contains uppercase
   cr_assert(is_valid_username("username!") == 1); // contains special char
   cr_assert(is_valid_username("1username") == 1); // starts with digit
   cr_assert(is_valid_username("") == 1);          // empty string
@@ -295,11 +295,11 @@ Test(groupname_validation, valid_groupnames)
   cr_assert(is_valid_groupname("groupname") == 0);
   cr_assert(is_valid_groupname("group-name") == 0);
   cr_assert(is_valid_groupname("groupname1") == 0);
+  cr_assert(is_valid_groupname("Groupname") == 0);
 }
 
 Test(groupname_validation, invalid_groupnames)
 {
-  cr_assert(is_valid_groupname("Groupname") == 1);  // contains uppercase
   cr_assert(is_valid_groupname("groupname!") == 1); // contains special char
   cr_assert(is_valid_groupname("1groupname") == 1); // starts with digit
   cr_assert(is_valid_groupname("") == 1);           // empty string
