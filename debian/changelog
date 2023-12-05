@@ -1,3 +1,9 @@
+libnss-stns-v2 (2.6.6-3) jammy; urgency=high
+
+  * Allow uppercase letters in usernames and group names
+
+ -- pyama86 <www.kazu.com@gmail.com>  Mon, 06 Nov   2023 12:00:00 +0900
+
 libnss-stns-v2 (2.6.6-2) jammy; urgency=high
 
   * Add Validation for Query with username

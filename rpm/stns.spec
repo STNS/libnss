@@ -1,7 +1,7 @@
 Summary:          SimpleTomlNameService Nss Module
 Name:             libnss-stns-v2
 Version:          2.6.6
-Release:          2
+Release:          3
 License:          GPLv3
 URL:              https://github.com/STNS/STNS
 Source:           %{name}-%{version}.tar.gz
@@ -61,6 +61,8 @@ sed -i "s/^IPAddressDeny=any/#IPAddressDeny=any/" /lib/systemd/system/systemd-lo
 %config(noreplace) /etc/stns/client/stns.conf
 
 %changelog
+* Thu Dec 05 2023 pyama86 <www.kazu.com@gmail.com> - 2.6.6-3
+- Allow uppercase letters in usernames and group names
 * Mon Nov 06 2023 pyama86 <www.kazu.com@gmail.com> - 2.6.6-2
 - Add Validation for Query with username
 * Fri Nov 03 2023 pyama86 <www.kazu.com@gmail.com> - 2.6.6-1
