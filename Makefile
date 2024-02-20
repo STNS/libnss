@@ -1,6 +1,7 @@
 # The base of this code is https://github.com/pyama86/stns/blob/master/Makefile
 CC=gcc
-CFLAGS=-Os -Wall -Wstrict-prototypes -Werror -fPIC -std=c99 -D_GNU_SOURCE -I$(CURL_DIR)/include -I$(OPENSSL_DIR)/include
+CFLAGS=-Os -Wall -Wstrict-prototypes -Werror -fPIC -std=c99 -D_GNU_SOURCE -I$(CURL_DIR)/include -I$(OPENSSL_DIR)/include -I$(LIBPSL_DIR)/include
+
 STNS_LDFLAGS=-Wl,--version-script,libstns.map
 
 LIBRARY=libnss_stns.so.2.0
