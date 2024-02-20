@@ -1,6 +1,7 @@
 # The base of this code is https://github.com/pyama86/stns/blob/master/Makefile
 CC=gcc
-CFLAGS=-Os -Wall -Wstrict-prototypes -Werror -fPIC -std=c99 -D_GNU_SOURCE -I$(CURL_DIR)/include -I$(OPENSSL_DIR)/include
+CFLAGS=-Os -Wall -Wstrict-prototypes -Werror -fPIC -std=c99 -D_GNU_SOURCE -I$(CURL_DIR)/include -I$(OPENSSL_DIR)/include -I$(LIBPSL_DIR)/include
+
 STNS_LDFLAGS=-Wl,--version-script,libstns.map
 
 LIBRARY=libnss_stns.so.2.0
@@ -17,8 +18,9 @@ BINSYMDIR=$(PREFIX)/local/bin/
 
 CRITERION_VERSION=2.4.2
 SHUNIT_VERSION=2.1.8
-CURL_VERSION_TAG=8_5_0
+CURL_VERSION_TAG=8_6_0
 CURL_VERSION=$(shell echo $(CURL_VERSION_TAG) | sed -e 's/_/./g')
+LIBPSL_VERSION ?= 0.21.5
 OPENSSL_VERSION=3.2.1
 ZLIB_VERSION=1.3.1
 
@@ -31,12 +33,17 @@ STNS_DIR:=$(DIST_DIR)/stns
 OPENSSL_DIR:=$(DIST_DIR)/openssl-$(OPENSSL_VERSION)
 CURL_DIR:=$(DIST_DIR)/curl-$(CURL_VERSION)
 ZLIB_DIR:=$(DIST_DIR)/zlib-$(ZLIB_VERSION)
+LIBPSL_DIR:=$(DIST_DIR)/libpsl-$(LIBPSL_VERSION)
 SOURCES=Makefile stns.h stns.c stns*.c stns*.h toml.h toml.c parson.h parson.c stns.conf.example test libstns.map
 
-STATIC_LIBS=$(CURL_DIR)/lib/libcurl.a $(OPENSSL_DIR)/lib/libssl.a  $(OPENSSL_DIR)/lib/libcrypto.a $(ZLIB_DIR)/lib/libz.a
+STATIC_LIBS=$(CURL_DIR)/lib/libcurl.a \
+	    $(OPENSSL_DIR)/lib/libssl.a  \
+	    $(OPENSSL_DIR)/lib/libcrypto.a \
+	    $(ZLIB_DIR)/lib/libz.a \
+	    $(LIBPSL_DIR)/lib/libpsl.a
 
 LIBS_CFLAGS=-Os -fPIC
-CURL_LDFLAGS := -L$(OPENSSL_DIR)/lib $(LIBS_CFLAGS)
+CURL_LDFLAGS := -L$(OPENSSL_DIR)/lib -L$(LIBPSL_DIR)/lib $(LIBS_CFLAGS)
 
 MAKE=make -j4
 default: build
@@ -46,7 +53,7 @@ test: cleanup testdev ## Test with dependencies installation
 	mkdir -p /etc/stns/client/
 	echo 'api_endpoint = "http://httpbin"' > /etc/stns/client/stns.conf
 	sudo service cache-stnsd restart
-	ASAN_OPTIONS=detect_leaks=1:exitcode=1:abort_on_error=true $(CC) -g3 -fsanitize=address -O0 -fno-omit-frame-pointer -I$(CURL_DIR)/include \
+	ASAN_OPTIONS=detect_leaks=1:exitcode=1:abort_on_error=true $(CC) -g3 -fsanitize=address -O0 -fno-omit-frame-pointer -I$(CURL_DIR)/include -I$(LIBPSL_DIR)/include \
 	  stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c stns_test.c stns_group_test.c stns_shadow_test.c stns_passwd_test.c \
 		$(STATIC_LIBS) \
 		-lcriterion \
@@ -67,6 +74,12 @@ zlib:  build_dir
 	  --prefix=$(ZLIB_DIR) \
 	&& $(MAKE) && $(MAKE) install)
 
+libpsl: build_dir
+	test -d $(SRC_DIR)/libpsl-$(LIBPSL_VERSION) || (curl -sL https://github.com/rockdaboot/libpsl/releases/download/$(LIBPSL_VERSION)/libpsl-$(LIBPSL_VERSION).tar.gz -o $(SRC_DIR)/libpsl-$(LIBPSL_VERSION).tar.gz && cd $(SRC_DIR) && tar -zxf libpsl-$(LIBPSL_VERSION).tar.gz)
+	test -f $(LIBPSL_DIR)/lib/libpsl.a || (cd $(SRC_DIR)/libpsl-$(LIBPSL_VERSION) && (make clean |true) && ./configure \
+     --prefix=$(LIBPSL_DIR) \
+    && make && make check && make install)
+
 openssl: build_dir zlib
 	test -d $(SRC_DIR)/openssl-$(OPENSSL_VERSION) || (curl -sL https://www.openssl.org/source/openssl-$(OPENSSL_VERSION).tar.gz -o $(SRC_DIR)/openssl-$(OPENSSL_VERSION).tar.gz && cd $(SRC_DIR) && tar xf openssl-$(OPENSSL_VERSION).tar.gz)
 	test -f $(OPENSSL_DIR)/lib/libssl.a || (cd $(SRC_DIR)/openssl-$(OPENSSL_VERSION) && (make clean |true) && CFLAGS='$(LIBS_CFLAGS)' ./config \
@@ -79,10 +92,10 @@ openssl: build_dir zlib
 	  -Wl,--enable-new-dtags \
 	  && $(MAKE) depend && $(MAKE) && $(MAKE) install)
 
-curl: build_dir openssl
+curl: build_dir openssl libpsl
 	test -d $(SRC_DIR)/curl-$(CURL_VERSION) || (curl -sL https://curl.haxx.se/download/curl-$(CURL_VERSION).tar.gz -o $(SRC_DIR)/curl-$(CURL_VERSION).tar.gz && cd $(SRC_DIR) && tar xf curl-$(CURL_VERSION).tar.gz)
 	test -f $(CURL_DIR)/lib/libcurl.a || (cd $(SRC_DIR)/curl-$(CURL_VERSION) && (make clean | true) && \
-	  LIBS="-ldl -lpthread" LDFLAGS="$(CURL_LDFLAGS)" CFLAGS='$(LIBS_CFLAGS)' ./configure \
+	  LIBS="-ldl -lpthread" LDFLAGS="$(CURL_LDFLAGS)" CFLAGS='$(LIBS_CFLAGS) -I$(LIBPSL_DIR)/include' ./configure \
 	  --with-openssl=$(OPENSSL_DIR) \
 	  --with-zlib=$(ZLIB_DIR) \
 	  --enable-libcurl-option \
@@ -117,6 +130,7 @@ criterion:  ## Installing dependencies for development
 debug:
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Testing$(RESET)"
 	$(CC) -g -I$(CURL_DIR)/include \
+	$(CC) -g -I$(LIBPSL_DIR)/include \
 	  test/debug.c stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c \
 		$(STATIC_LIBS) \
 		 -lpthread -ldl -o $(DIST_DIR)/debug && \
@@ -276,6 +290,7 @@ github_release: ## Create some distribution packages
 
 stnsd:
 	(dpkg -l |grep stnsd) || (curl -s -L -O https://github.com/STNS/cache-stnsd/releases/download/v$(STNSD_VERSION)/cache-stnsd_$(STNSD_VERSION)-1_amd64.jammy.deb && sudo dpkg -i cache-stnsd_$(STNSD_VERSION)-1_amd64.jammy.deb)
+	rm -rf cache-stnsd_$(STNSD_VERSION)-1_amd64.jammy.deb
 	sudo service cache-stnsd start
 
 parson:
