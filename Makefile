@@ -53,7 +53,7 @@ test: cleanup testdev ## Test with dependencies installation
 	mkdir -p /etc/stns/client/
 	echo 'api_endpoint = "http://httpbin"' > /etc/stns/client/stns.conf
 	sudo service cache-stnsd restart
-	ASAN_OPTIONS=detect_leaks=1:exitcode=1:abort_on_error=true $(CC) -g3 -fsanitize=address -O0 -fno-omit-frame-pointer -I$(CURL_DIR)/include \
+	ASAN_OPTIONS=detect_leaks=1:exitcode=1:abort_on_error=true $(CC) -g3 -fsanitize=address -O0 -fno-omit-frame-pointer -I$(CURL_DIR)/include -I$(LIBPSL_DIR)/include \
 	  stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c stns_test.c stns_group_test.c stns_shadow_test.c stns_passwd_test.c \
 		$(STATIC_LIBS) \
 		-lcriterion \
@@ -131,6 +131,7 @@ criterion:  ## Installing dependencies for development
 debug:
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Testing$(RESET)"
 	$(CC) -g -I$(CURL_DIR)/include \
+	  -I$(LIBPSL_DIR)/include \
 	  test/debug.c stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c \
 		$(STATIC_LIBS) \
 		 -lpthread -ldl -o $(DIST_DIR)/debug && \
