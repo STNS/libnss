@@ -42,7 +42,7 @@ STATIC_LIBS=$(CURL_DIR)/lib/libcurl.a \
 	    $(LIBPSL_DIR)/lib/libpsl.a
 
 LIBS_CFLAGS=-Os -fPIC
-CURL_LDFLAGS := -L$(OPENSSL_DIR)/lib $(LIBS_CFLAGS)
+CURL_LDFLAGS := -L$(OPENSSL_DIR)/lib -L$(LIBPSL_DIR)/lib $(LIBS_CFLAGS)
 
 MAKE=make -j4
 default: build
