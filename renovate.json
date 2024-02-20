@@ -48,6 +48,16 @@
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "madler/zlib",
       "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "^Makefile$"
+      ],
+      "matchStrings": ["PSL_VERSION=(?<currentValue>.+)"],
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "rockdaboot/libpsl",
+      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}"
     }
   ]
 }

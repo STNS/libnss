@@ -19,6 +19,7 @@ CRITERION_VERSION=2.4.2
 SHUNIT_VERSION=2.1.8
 CURL_VERSION_TAG=8_6_0
 CURL_VERSION=$(shell echo $(CURL_VERSION_TAG) | sed -e 's/_/./g')
+LIBPSL_VERSION ?= 0.21.5
 OPENSSL_VERSION=3.2.1
 ZLIB_VERSION=1.3.1
 
@@ -31,9 +32,14 @@ STNS_DIR:=$(DIST_DIR)/stns
 OPENSSL_DIR:=$(DIST_DIR)/openssl-$(OPENSSL_VERSION)
 CURL_DIR:=$(DIST_DIR)/curl-$(CURL_VERSION)
 ZLIB_DIR:=$(DIST_DIR)/zlib-$(ZLIB_VERSION)
+LIBPSL_DIR:=$(DIST_DIR)/libpsl-$(LIBPSL_VERSION)
 SOURCES=Makefile stns.h stns.c stns*.c stns*.h toml.h toml.c parson.h parson.c stns.conf.example test libstns.map
 
-STATIC_LIBS=$(CURL_DIR)/lib/libcurl.a $(OPENSSL_DIR)/lib/libssl.a  $(OPENSSL_DIR)/lib/libcrypto.a $(ZLIB_DIR)/lib/libz.a
+STATIC_LIBS=$(CURL_DIR)/lib/libcurl.a \
+	    $(OPENSSL_DIR)/lib/libssl.a  \
+	    $(OPENSSL_DIR)/lib/libcrypto.a \
+	    $(ZLIB_DIR)/lib/libz.a \
+	    $(LIBPSL_DIR)/lib/libpsl.a
 
 LIBS_CFLAGS=-Os -fPIC
 CURL_LDFLAGS := -L$(OPENSSL_DIR)/lib $(LIBS_CFLAGS)
@@ -67,6 +73,12 @@ zlib:  build_dir
 	  --prefix=$(ZLIB_DIR) \
 	&& $(MAKE) && $(MAKE) install)
 
+libpsl: build_dir
+	test -d $(SRC_DIR)/libpsl-$(LIBPSL_VERSION) || (curl -sL https://github.com/rockdaboot/libpsl/releases/download/$(LIBPSL_VERSION)/libpsl-$(LIBPSL_VERSION).tar.gz -o $(SRC_DIR)/libpsl-$(LIBPSL_VERSION).tar.gz && cd $(SRC_DIR) && tar -zxf libpsl-$(LIBPSL_VERSION).tar.gz)
+	test -f $(LIBPSL_DIR)/lib/libpsl.a || (cd $(SRC_DIR)/libpsl-$(LIBPSL_VERSION) && (make clean |true) && ./configure \
+     --prefix=$(LIBPSL_DIR) \
+    && make && make check && make install)
+
 openssl: build_dir zlib
 	test -d $(SRC_DIR)/openssl-$(OPENSSL_VERSION) || (curl -sL https://www.openssl.org/source/openssl-$(OPENSSL_VERSION).tar.gz -o $(SRC_DIR)/openssl-$(OPENSSL_VERSION).tar.gz && cd $(SRC_DIR) && tar xf openssl-$(OPENSSL_VERSION).tar.gz)
 	test -f $(OPENSSL_DIR)/lib/libssl.a || (cd $(SRC_DIR)/openssl-$(OPENSSL_VERSION) && (make clean |true) && CFLAGS='$(LIBS_CFLAGS)' ./config \
@@ -79,12 +91,13 @@ openssl: build_dir zlib
 	  -Wl,--enable-new-dtags \
 	  && $(MAKE) depend && $(MAKE) && $(MAKE) install)
 
-curl: build_dir openssl
+curl: build_dir openssl libpsl
 	test -d $(SRC_DIR)/curl-$(CURL_VERSION) || (curl -sL https://curl.haxx.se/download/curl-$(CURL_VERSION).tar.gz -o $(SRC_DIR)/curl-$(CURL_VERSION).tar.gz && cd $(SRC_DIR) && tar xf curl-$(CURL_VERSION).tar.gz)
 	test -f $(CURL_DIR)/lib/libcurl.a || (cd $(SRC_DIR)/curl-$(CURL_VERSION) && (make clean | true) && \
 	  LIBS="-ldl -lpthread" LDFLAGS="$(CURL_LDFLAGS)" CFLAGS='$(LIBS_CFLAGS)' ./configure \
 	  --with-openssl=$(OPENSSL_DIR) \
 	  --with-zlib=$(ZLIB_DIR) \
+	  --with-libpsl=$(LIBPSL_DIR) \
 	  --enable-libcurl-option \
 	  --disable-shared \
 	  --enable-static \
@@ -276,6 +289,7 @@ github_release: ## Create some distribution packages
 
 stnsd:
 	(dpkg -l |grep stnsd) || (curl -s -L -O https://github.com/STNS/cache-stnsd/releases/download/v$(STNSD_VERSION)/cache-stnsd_$(STNSD_VERSION)-1_amd64.jammy.deb && sudo dpkg -i cache-stnsd_$(STNSD_VERSION)-1_amd64.jammy.deb)
+	rm -rf cache-stnsd_$(STNSD_VERSION)-1_amd64.jammy.deb
 	sudo service cache-stnsd start
 
 parson:
