@@ -95,10 +95,9 @@ openssl: build_dir zlib
 curl: build_dir openssl libpsl
 	test -d $(SRC_DIR)/curl-$(CURL_VERSION) || (curl -sL https://curl.haxx.se/download/curl-$(CURL_VERSION).tar.gz -o $(SRC_DIR)/curl-$(CURL_VERSION).tar.gz && cd $(SRC_DIR) && tar xf curl-$(CURL_VERSION).tar.gz)
 	test -f $(CURL_DIR)/lib/libcurl.a || (cd $(SRC_DIR)/curl-$(CURL_VERSION) && (make clean | true) && \
-	  LIBS="-ldl -lpthread" LDFLAGS="$(CURL_LDFLAGS)" CFLAGS='$(LIBS_CFLAGS)' ./configure \
+	  LIBS="-ldl -lpthread" LDFLAGS="$(CURL_LDFLAGS)" CFLAGS='$(LIBS_CFLAGS) -I$(LIBPSL_DIR)/include' ./configure \
 	  --with-openssl=$(OPENSSL_DIR) \
 	  --with-zlib=$(ZLIB_DIR) \
-	  --with-libpsl=$(LIBPSL_DIR) \
 	  --enable-libcurl-option \
 	  --disable-shared \
 	  --enable-static \
@@ -131,7 +130,7 @@ criterion:  ## Installing dependencies for development
 debug:
 	@echo "$(INFO_COLOR)==> $(RESET)$(BOLD)Testing$(RESET)"
 	$(CC) -g -I$(CURL_DIR)/include \
-	  -I$(LIBPSL_DIR)/include \
+	$(CC) -g -I$(LIBPSL_DIR)/include \
 	  test/debug.c stns.c stns_group.c toml.c parson.c stns_shadow.c stns_passwd.c \
 		$(STATIC_LIBS) \
 		 -lpthread -ldl -o $(DIST_DIR)/debug && \
