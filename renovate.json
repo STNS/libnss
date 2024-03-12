@@ -5,6 +5,12 @@
   ],
   "packageRules": [
     {
+      "matchUpdateTypes": [
+        "digest"
+      ],
+      "enabled": false
+    },
+    {
       "matchUpdateTypes": ["minor", "patch", "pin"],
       "automerge": true
     },
