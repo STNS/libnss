@@ -220,7 +220,7 @@ rpm: source_for_rpm ## Packaging for RPM
 	cp builds/libnss-stns-v2-$(VERSION).tar.gz /root/rpmbuild/SOURCES
 	mkdir -p /root/rpmbuild/tmp/
 	spectool -g -R rpm/stns.spec
-	rpmbuild -ba rpm/stns.spec
+	rpmbuild --target `uname -m` -ba rpm/stns.spec
 	mv /root/rpmbuild/RPMS/*/*.rpm /stns/builds
 
 source_for_deb: ## Create source for DEB
