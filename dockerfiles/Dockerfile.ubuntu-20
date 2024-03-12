@@ -1,6 +1,7 @@
 FROM ubuntu:focal
 MAINTAINER pyama86 <www.kazu.com@gmail.com>
 
+ENV EBIAN_FRONTEND noninteractive
 RUN apt-get -qqy update && \
     apt-get install -qqy \
     tzdata \
