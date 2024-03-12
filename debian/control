@@ -9,7 +9,7 @@ Vcs-Browser: https://github.com/STNS/STNS/tree/debian
 Vcs-Git: https://github.com/STNS/STNS -b debian
 
 Package: libnss-stns-v2
-Architecture: amd64
+Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, libc6
 Recommends: cache-stnsd
 Description: We provide name resolution of Linux user group using STNS.

@@ -15,7 +15,7 @@ Requires:         glibc cache-stnsd
 BuildRequires:    gcc make
 %endif
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildArch:        i386, x86_64
+BuildArch:        i386, x86_64, aarch64
 
 %define debug_package %{nil}
 
@@ -61,7 +61,7 @@ sed -i "s/^IPAddressDeny=any/#IPAddressDeny=any/" /lib/systemd/system/systemd-lo
 %config(noreplace) /etc/stns/client/stns.conf
 
 %changelog
-* Thu Dec 05 2023 pyama86 <www.kazu.com@gmail.com> - 2.6.6-3
+* Tue Dec 05 2023 pyama86 <www.kazu.com@gmail.com> - 2.6.6-3
 - Allow uppercase letters in usernames and group names
 * Mon Nov 06 2023 pyama86 <www.kazu.com@gmail.com> - 2.6.6-2
 - Add Validation for Query with username
@@ -69,7 +69,7 @@ sed -i "s/^IPAddressDeny=any/#IPAddressDeny=any/" /lib/systemd/system/systemd-lo
 - I have fixed primarily memory leaks and buffer overflow vulnerabilities that were detected by the Continuous Integration (CI) system.
 * Thu Nov 02 2023 pyama86 <www.kazu.com@gmail.com> - 2.6.5-1
 -  Check User/Group Name Before Query
-* Sun Oct 11 2023 pyama86 <www.kazu.com@gmail.com> - 2.6.4-1
+* Wed Oct 11 2023 pyama86 <www.kazu.com@gmail.com> - 2.6.4-1
 -  Update dependency curl/curl to v8_4_0
 * Sun Jun 18 2023 pyama86 <www.kazu.com@gmail.com> - 2.6.3-1
 - update openssl and curl
