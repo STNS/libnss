@@ -4,18 +4,9 @@ on:
   push:
 jobs:
   build:
-    strategy:
-      matrix:
-        arch:
-          - arm64
-          - amd64
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
-      with:
-          platforms: linux/${{ matrix.arch}}
     - name: Cache assets
       uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4
       with:
