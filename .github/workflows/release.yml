@@ -26,6 +26,8 @@ jobs:
             platforms: linux/${{ matrix.arch}}
       - name: build
         run: make pkg
+        env:
+          DOCKER_DEFAULT_PLATFORM: linux/${{ matrix.arch}}
       - name: donwload ghr
         run: |
           curl -L -O -s https://github.com/tcnksm/ghr/releases/download/v0.16.2/ghr_v0.16.2_linux_amd64.tar.gz
