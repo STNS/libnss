@@ -15,7 +15,6 @@ Requires:         glibc cache-stnsd
 BuildRequires:    gcc make
 %endif
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildArch:        noarch
 
 %define debug_package %{nil}
 
