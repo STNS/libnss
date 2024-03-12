@@ -8,6 +8,11 @@ env:
 name: Release
 jobs:
   build:
+    strategy:
+      matrix:
+        arch:
+          - arm64
+          - amd64
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -15,6 +20,10 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         with:
           fetch-depth: 0
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+            platforms: linux/${{ matrix.arch}}
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@0d103c3126aa41d772a8362f6aa67afac040f80c # v3
@@ -22,8 +31,8 @@ jobs:
         run: make pkg
       - name: donwload ghr
         run: |
-          curl -L -O -s https://github.com/tcnksm/ghr/releases/download/v0.16.0/ghr_v0.16.0_linux_amd64.tar.gz
-          tar zxf ghr_v0.16.0_linux_amd64.tar.gz
-          sudo mv ghr_v0.16.0_linux_amd64/ghr /usr/bin
+          curl -L -O -s https://github.com/tcnksm/ghr/releases/download/v0.16.2/ghr_v0.16.2_linux_amd64.tar.gz
+          tar zxf ghr_v0.16.2_linux_amd64.tar.gz
+          sudo mv ghr_v0.16.2_linux_amd64/ghr /usr/bin
       - name: release
         run: make github_release
