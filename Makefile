@@ -131,7 +131,7 @@ debug:
 		 -lpthread -ldl -o $(DIST_DIR)/debug && \
 		$(DIST_DIR)/debug && valgrind --leak-check=full tmp/libs/debug
 
-testdev: build_dir curl criterion stnsd  ## Test without dependencies installation
+testdev: build_dir curl criterion ## Test without dependencies installation
 
 build: nss_build key_wrapper_build
 nss_build : build_dir curl ## Build nss_stns
@@ -282,11 +282,6 @@ test_on_docker: docker
 
 github_release: ## Create some distribution packages
 	ghr -u STNS --replace v$(VERSION) builds/
-
-stnsd:
-	(dpkg -l |grep stnsd) || (curl -s -L -O https://github.com/STNS/cache-stnsd/releases/download/v$(STNSD_VERSION)/cache-stnsd_$(STNSD_VERSION)-1_amd64.jammy.deb && sudo dpkg -i cache-stnsd_$(STNSD_VERSION)-1_amd64.jammy.deb)
-	rm -rf cache-stnsd_$(STNSD_VERSION)-1_amd64.jammy.deb
-	sudo service cache-stnsd start
 
 parson:
 	rm -rf /tmp/parson && git clone https://github.com/kgabis/parson.git /tmp/parson && \

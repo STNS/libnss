@@ -10,10 +10,12 @@ RUN apt install -qqy \
     git \
     vim \
     stns-v2 \
+    cache-stnsd \
+    systemd \
+    init \
     netcat \
     libasan5 \
     valgrind \
-    finit-sysv \
     flawfinder
 RUN mkdir /stns
 WORKDIR /stns
