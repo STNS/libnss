@@ -1,0 +1,24 @@
+FROM ubuntu:noble
+MAINTAINER pyama86 <www.kazu.com@gmail.com>
+
+RUN ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
+RUN apt-get -qqy update && \
+    apt-get install -qqy \
+      tzdata \
+      curl \
+      glibc-source \
+      gcc \
+      make \
+      bzip2 \
+      unzip \
+      debhelper \
+      dh-make \
+      devscripts \
+      cdbs \
+      clang \
+      git
+
+ENV LIBDIR=/usr/lib
+ENV USER root
+RUN mkdir /stns
+WORKDIR /stns

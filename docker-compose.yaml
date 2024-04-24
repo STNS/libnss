@@ -36,6 +36,15 @@ services:
     environment:
       DIST: jammy
     command: make deb
+  nss_ubuntu24:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.ubuntu-24
+    volumes:
+      - .:/stns
+    environment:
+      DIST: noble
+    command: make deb
   nss_debian10:
     build:
       context: .
