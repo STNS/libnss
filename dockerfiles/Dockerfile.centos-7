@@ -11,6 +11,7 @@ RUN yum install  -y  glibc \
       && \
     yum install -y clang \
     perl-IPC-Cmd \
+    perl-Data-Dumper \
     git
 
 RUN mkdir -p /root/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
