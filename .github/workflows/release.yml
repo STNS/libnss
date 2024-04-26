@@ -10,10 +10,12 @@ jobs:
   build:
     strategy:
       matrix:
-        arch:
-          - arm64
-          - amd64
-    runs-on: ubuntu-latest
+        include:
+          - arch: arm64
+            os: macos-14
+          - arch: amd64
+            os: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
