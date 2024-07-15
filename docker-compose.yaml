@@ -63,3 +63,12 @@ services:
     environment:
       DIST: bullseye
     command: make deb
+  nss_debian12:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.debian-12
+    volumes:
+      - .:/stns
+    environment:
+      DIST: bookworm
+    command: make deb
