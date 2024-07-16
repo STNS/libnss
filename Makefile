@@ -256,7 +256,8 @@ version:
 
 pkg: version ## Create some distribution packages
 	rm -rf builds && mkdir build:
-	scripts/pkg.sh
+	docker-compose build
+	docker-compose run --rm -v $(shell pwd)/:/stns
 
 changelog:
 	git-chglog -o CHANGELOG.md
