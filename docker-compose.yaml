@@ -45,15 +45,6 @@ services:
     environment:
       DIST: noble
     command: make deb
-  nss_debian10:
-    build:
-      context: .
-      dockerfile: dockerfiles/Dockerfile.debian-10
-    volumes:
-      - .:/stns
-    environment:
-      DIST: buster
-    command: make deb
   nss_debian11:
     build:
       context: .
