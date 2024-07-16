@@ -1,6 +1,9 @@
 FROM centos:7
 MAINTAINER pyama86 <www.kazu.com@gmail.com>
-RUN yum install  -y  glibc \
+RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-* && \
+    sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-* && \
+    yum -y update && yum clean all && \
+    yum install  -y  glibc \
       gcc \
       make \
       bzip2 \
