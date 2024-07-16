@@ -2,8 +2,7 @@ libnss-stns-v2 (2.6.7-1) jammy; urgency=high
 
   * update openssl and curl
 
- -- pyama86 <www.kazu.com@gmail.com>  Mon, 06 Nov   2023 12:00:00 +0900
-
+ -- pyama86 <www.kazu.com@gmail.com>  Tue, 17 Jul 2024 12:00:00 +0900
 
 libnss-stns-v2 (2.6.6-3) jammy; urgency=high
 
