@@ -255,7 +255,7 @@ version:
 	@git describe --tags --abbrev=0|sed -e 's/v//g' > version
 
 pkg: version ## Create some distribution packages
-	rm -rf builds && mkdir builds
+	rm -rf builds && mkdir -p builds
 	docker-compose build
 	docker-compose up --abort-on-container-exit
 

@@ -6,6 +6,5 @@ builds/*
 tmp*
 default.etcd
 .vagrant
-builds/*
 STNS
 version
