@@ -255,9 +255,9 @@ version:
 	@git describe --tags --abbrev=0|sed -e 's/v//g' > version
 
 pkg: version ## Create some distribution packages
-	rm -rf builds && mkdir build:
+	rm -rf builds && mkdir build
 	docker-compose build
-	docker-compose run --rm -v $(shell pwd)/:/stns
+	docker-compose run --rm -v $(shell pwd):/stns
 
 changelog:
 	git-chglog -o CHANGELOG.md
