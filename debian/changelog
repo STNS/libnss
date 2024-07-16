@@ -1,4 +1,4 @@
-ibnss-stns-v2 (2.6.7-1) jammy; urgency=high
+libnss-stns-v2 (2.6.7-1) jammy; urgency=high
 
   * update openssl and curl
 
