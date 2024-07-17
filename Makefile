@@ -241,8 +241,8 @@ deb: source_for_deb ## Packaging for DEB
 		dh_make --single --createorig -y && \
 		rm -rf debian/*.ex debian/*.EX debian/README.Debian && \
 		cp -v /stns/debian/* debian/ && \
-		sed -i -e 's/xenial/$(DIST)/g' debian/changelog && \
-		debuild -e DIST=$(DIST) -uc -us -a`dpkg --print-architecture` 
+		sed -e 's/xenial/$(DIST)/g' -e 's/jammy/$(DIST)/g' /stns/debian/changelog > debian/changelog && \
+		debuild -e DIST=$(DIST) -uc -us -a `dpkg --print-architecture`
 	cd $(STNS_DIR) && \
 		find . -name "*.deb" | sed -e 's/\(\(.*libnss-stns-v2.*\).deb\)/mv \1 \2.$(DIST).deb/g' | sh && \
 		mkdir -p /stns/builds && \
