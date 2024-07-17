@@ -256,8 +256,7 @@ version:
 
 pkg: version ## Create some distribution packages
 	rm -rf builds && mkdir -p builds
-	docker-compose build
-	docker-compose up --abort-on-container-exit
+	./build.sh
 
 changelog:
 	git-chglog -o CHANGELOG.md
