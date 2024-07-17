@@ -8,6 +8,7 @@ env:
 name: Release
 jobs:
   build:
+    timeout-minutes: 1440
     strategy:
       matrix:
         arch:

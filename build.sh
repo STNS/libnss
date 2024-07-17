@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # コンテナの同時起動数を定義
-CONCURRENT_LIMIT=2
+CONCURRENT_LIMIT=4
 
 # サービス名の配列を取得
 services_list=($(docker-compose config --services))
