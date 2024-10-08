@@ -1,6 +1,7 @@
 FROM ubuntu:jammy
 MAINTAINER pyama86 <www.kazu.com@gmail.com>
 
+ENV DEBIAN_FRONTEND=noninteractive
 RUN ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
 RUN apt-get -qqy update && \
     apt-get install -qqy \
