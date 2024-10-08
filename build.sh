@@ -4,11 +4,11 @@
 CONCURRENT_LIMIT=4
 
 # サービス名の配列を取得
-services=($(docker-compose config --services))
+services=($(docker compose config --services))
 
 # 各サービスをビルドする（省略可能）
 for service in "${services[@]}"; do
-    docker-compose build "$service"
+    docker compose build "$service"
 done
 
 # 起動ジョブの制御用関連変数の初期化
@@ -19,7 +19,7 @@ declare -A services_started
 start_service() {
     local service="$1"
     echo "Starting service: $service"
-    docker-compose up "$service" &
+    docker compose up "$service" &
     pids[$!]=$service
     services_started[$service]=1
 }
