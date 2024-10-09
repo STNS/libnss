@@ -17,6 +17,12 @@ RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-* && \
     perl-Data-Dumper \
     git
 
+RUN yum install -y perl perl-CPAN perl-App-cpanminus
+# Test::More と Sub::Util をインストール
+RUN cpanm Test::More
+RUN cpanm Sub::Util
+
+
 RUN mkdir -p /root/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
 RUN sed -i "s;%_build_name_fmt.*;%_build_name_fmt\t%%{ARCH}/%%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.el7.rpm;" /usr/lib/rpm/macros
 
