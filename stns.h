@@ -58,7 +58,7 @@ struct stns_conf_t {
   char *query_wrapper;
   char *chain_ssh_wrapper;
   char *http_proxy;
-  int http_location;
+  long http_location;
   char *cache_dir;
   char *tls_cert;
   char *tls_key;
@@ -68,9 +68,9 @@ struct stns_conf_t {
   stns_user_httpheaders_t *http_headers;
   int uid_shift;
   int gid_shift;
-  int ssl_verify;
+  long ssl_verify;
   int use_cached;
-  int request_timeout;
+  long request_timeout;
   int request_retry;
   int request_locktime;
   int cache;
