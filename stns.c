@@ -99,12 +99,36 @@ int stns_load_config(char *filename, stns_conf_t *c)
   GET_TOML_BYKEY(gid_shift, toml_rtoi, 0, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(cache_ttl, toml_rtoi, 600, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(negative_cache_ttl, toml_rtoi, 10, TOML_NULL_OR_INT);
-  GET_TOML_BYKEY(ssl_verify, toml_rtob, 1, TOML_NULL_OR_INT);
+
+  // Load long type fields via temporary int variables
+  int tmp_ssl_verify = 1;
+  int tmp_request_timeout = 10;
+  int tmp_http_location = 0;
+
+  if (0 != (raw = toml_raw_in(tab, "ssl_verify"))) {
+    if (0 != toml_rtob(raw, &tmp_ssl_verify)) {
+      syslog(LOG_ERR, "%s(stns)[L%d] cannot parse toml file:%s key:ssl_verify", __func__, __LINE__, filename);
+    }
+  }
+  c->ssl_verify = (long)tmp_ssl_verify;
+
+  if (0 != (raw = toml_raw_in(tab, "request_timeout"))) {
+    if (0 != toml_rtoi(raw, &tmp_request_timeout)) {
+      syslog(LOG_ERR, "%s(stns)[L%d] cannot parse toml file:%s key:request_timeout", __func__, __LINE__, filename);
+    }
+  }
+  c->request_timeout = (long)tmp_request_timeout;
+
+  if (0 != (raw = toml_raw_in(tab, "http_location"))) {
+    if (0 != toml_rtob(raw, &tmp_http_location)) {
+      syslog(LOG_ERR, "%s(stns)[L%d] cannot parse toml file:%s key:http_location", __func__, __LINE__, filename);
+    }
+  }
+  c->http_location = (long)tmp_http_location;
+
   GET_TOML_BYKEY(cache, toml_rtob, 1, TOML_NULL_OR_INT);
-  GET_TOML_BYKEY(request_timeout, toml_rtoi, 10, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(request_retry, toml_rtoi, 3, TOML_NULL_OR_INT);
   GET_TOML_BYKEY(request_locktime, toml_rtoi, 60, TOML_NULL_OR_INT);
-  GET_TOML_BYKEY(http_location, toml_rtob, 0, TOML_NULL_OR_INT);
 
   TRIM_SLASH(api_endpoint)
   TRIM_SLASH(cache_dir)
