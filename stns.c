@@ -314,8 +314,8 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
       }
     }
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, c->ssl_verify);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, c->ssl_verify);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, (long)c->ssl_verify);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, (long)c->ssl_verify);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, STNS_VERSION_WITH_NAME);
     if (c->http_location == 1) {
       curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
@@ -347,13 +347,13 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
              "http://unix", path);
   }
   curl_easy_setopt(curl, CURLOPT_URL, url);
-  curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
-  curl_easy_setopt(curl, CURLOPT_TIMEOUT, c->request_timeout);
+  curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L);
+  curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long)c->request_timeout);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
   curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, header_callback);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, res);
   curl_easy_setopt(curl, CURLOPT_HEADERDATA, c);
-  curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
+  curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
 
 #ifdef DEBUG
   syslog(LOG_ERR, "%s(stns)[L%d] before request http request: %s", __func__, __LINE__, url);
