@@ -143,3 +143,23 @@ Test(inner_nss_stns_getspent_r, ok)
   _nss_stns_endspent();
   free(json);
 }
+
+Test(ensure_spwd_by_name, long_password_no_overflow)
+{
+  struct spwd spbuf;
+  char buffer[MAXBUF * 8];
+  stns_conf_t c;
+  c.uid_shift = 0;
+
+  // a password longer than MAXBUF must not overflow the fixed stack buffer
+  char long_password[4096];
+  memset(long_password, 'a', sizeof(long_password) - 1);
+  long_password[sizeof(long_password) - 1] = '\0';
+
+  char json[8192];
+  snprintf(json, sizeof(json), "[{\"id\":1,\"name\":\"user1\",\"password\":\"%s\"}]", long_password);
+
+  int code = ensure_spwd_by_name(json, &c, "user1", &spbuf, buffer, sizeof(buffer), 0);
+  cr_assert_eq(code, NSS_STATUS_SUCCESS);
+  cr_assert(strnlen(spbuf.sp_pwdp, sizeof(long_password)) < MAXBUF);
+}
