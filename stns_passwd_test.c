@@ -191,3 +191,40 @@ Test(inner_nss_stns_getpwent_r, ok)
   _nss_stns_endpwent();
   free(json);
 }
+
+Test(ensure_passwd_by_name, long_shell_no_overflow)
+{
+  struct passwd pwd;
+  char buffer[MAXBUF * 8];
+  stns_conf_t c;
+  c.uid_shift = 0;
+  c.gid_shift = 0;
+
+  // a shell longer than MAXBUF must not overflow the fixed stack buffer
+  char long_shell[4096];
+  memset(long_shell, 'a', sizeof(long_shell) - 1);
+  long_shell[sizeof(long_shell) - 1] = '\0';
+
+  char json[8192];
+  snprintf(json, sizeof(json), "[{\"id\":1,\"name\":\"user1\",\"group_id\":1,\"gecos\":\"test\",\"shell\":\"%s\"}]",
+           long_shell);
+
+  int code = ensure_passwd_by_name(json, &c, "user1", &pwd, buffer, sizeof(buffer), 0);
+  cr_assert_eq(code, NSS_STATUS_SUCCESS);
+  cr_assert(strnlen(pwd.pw_shell, sizeof(long_shell)) < MAXBUF);
+}
+
+Test(ensure_passwd_by_name, missing_gecos_no_crash)
+{
+  struct passwd pwd;
+  char buffer[MAXBUF];
+  stns_conf_t c;
+  c.uid_shift = 0;
+  c.gid_shift = 0;
+
+  // a missing gecos field must not crash (NULL is treated as "")
+  char *json = "[{\"id\":1,\"name\":\"user1\",\"group_id\":1,\"shell\":\"/bin/sh\"}]";
+  int code   = ensure_passwd_by_name(json, &c, "user1", &pwd, buffer, sizeof(buffer), 0);
+  cr_assert_eq(code, NSS_STATUS_SUCCESS);
+  cr_assert_str_eq(pwd.pw_gecos, "");
+}

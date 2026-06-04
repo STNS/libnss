@@ -129,9 +129,9 @@ extern int is_valid_groupname(const char *username);
 #define STNS_SET_DEFAULT_VALUE(buf, name, def)                                                                         \
   char buf[MAXBUF];                                                                                                    \
   if (name != NULL && strnlen(name, STNS_MAX_BUFFER_SIZE) > 0) {                                                       \
-    strcpy(buf, name);                                                                                                 \
+    snprintf(buf, sizeof(buf), "%s", name);                                                                            \
   } else {                                                                                                             \
-    strcpy(buf, def);                                                                                                  \
+    snprintf(buf, sizeof(buf), "%s", def);                                                                             \
   }                                                                                                                    \
   name = buf;
 
@@ -166,14 +166,15 @@ extern int is_valid_groupname(const char *username);
   }
 
 #define SET_ATTRBUTE(type, name, attr)                                                                                 \
-  int name##_length = strnlen(name, STNS_MAX_BUFFER_SIZE) + 1;                                                         \
+  const char *name##_value = (name != NULL) ? name : "";                                                               \
+  int name##_length        = strnlen(name##_value, STNS_MAX_BUFFER_SIZE) + 1;                                          \
                                                                                                                        \
   if (buflen < name##_length) {                                                                                        \
     *errnop = ERANGE;                                                                                                  \
     return NSS_STATUS_TRYAGAIN;                                                                                        \
   }                                                                                                                    \
                                                                                                                        \
-  strcpy(buf, name);                                                                                                   \
+  strncpy(buf, name##_value, name##_length);                                                                           \
   rbuf->type##_##attr = buf;                                                                                           \
   buf += name##_length;                                                                                                \
   buflen -= name##_length;

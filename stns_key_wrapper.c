@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  int i;
+  int i, j;
   int size = 0;
   int key_size;
   JSON_Object *leaf;
@@ -80,47 +80,48 @@ int main(int argc, char *argv[])
     }
 
     JSON_Array *json_keys = json_object_get_array(leaf, "keys");
-    for (i = 0; i < json_array_get_count(json_keys); i++) {
-      const char *key = json_array_get_string(json_keys, i);
-
-      if (size != 0) {
-        keys[size] = '\n';
-        size++;
-        keys[size] = '\0';
+    for (j = 0; j < json_array_get_count(json_keys); j++) {
+      const char *key = json_array_get_string(json_keys, j);
+      if (key == NULL) {
+        continue;
       }
       key_size = strnlen(key, STNS_MAX_BUFFER_SIZE);
 
-      if (keys) {
-        keys = (char *)realloc(keys, key_size + strnlen(keys, STNS_MAX_BUFFER_SIZE) + 2);
-      } else {
-        keys = (char *)malloc(strnlen(key, STNS_MAX_BUFFER_SIZE) + 2);
+      // size(existing) + key + separator '\n' + terminator '\0'
+      char *resized = (char *)realloc(keys, size + key_size + 2);
+      if (resized == NULL) {
+        break;
       }
+      keys = resized;
 
       memcpy(&(keys[size]), key, (size_t)key_size);
       size += key_size;
+      keys[size] = '\n';
+      size++;
+      keys[size] = '\0';
     }
-  }
-
-  if (keys) {
-    keys[size] = '\n';
-    size++;
-    keys[size] = '\0';
   }
 
   if (c.chain_ssh_wrapper != NULL) {
     stns_response_t cr;
     cr.data = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
-    if (stns_exec_cmd(c.chain_ssh_wrapper, argv[optind], &cr) == 0) {
-      key_size = cr.size;
-      keys     = (char *)realloc(keys, key_size + strnlen(keys, STNS_MAX_BUFFER_SIZE) + 1);
-      int len  = strnlen(cr.data, STNS_MAX_BUFFER_SIZE);
-      strncpy(&(keys[size]), cr.data, len + 1);
-      size += key_size;
+    if (cr.data != NULL && stns_exec_cmd(c.chain_ssh_wrapper, argv[optind], &cr) == 0) {
+      int len       = strnlen(cr.data, STNS_MAX_BUFFER_SIZE);
+      char *resized = (char *)realloc(keys, size + len + 1);
+      if (resized != NULL) {
+        keys = resized;
+        strncpy(&(keys[size]), cr.data, len + 1);
+        size += len;
+      }
     }
     free(cr.data);
   }
 
-  fprintf(stdout, "%s\n", keys);
+  if (keys != NULL) {
+    fprintf(stdout, "%s\n", keys);
+  } else {
+    fprintf(stdout, "\n");
+  }
   free(keys);
   json_value_free(root);
   stns_unload_config(&c);
