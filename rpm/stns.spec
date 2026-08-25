@@ -1,6 +1,6 @@
 Summary:          SimpleTomlNameService Nss Module
 Name:             libnss-stns-v2
-Version:          2.6.8
+Version:          2.6.11
 Release:          1
 License:          GPLv3
 URL:              https://github.com/STNS/STNS
@@ -60,6 +60,18 @@ sed -i "s/^IPAddressDeny=any/#IPAddressDeny=any/" /lib/systemd/system/systemd-lo
 %config(noreplace) /etc/stns/client/stns.conf
 
 %changelog
+* Tue Aug 25 2026 pyama86 <www.kazu.com@gmail.com> - 2.6.11-1
+- add Ubuntu 26.04 (resolute) support
+- update dependency openssl/openssl to v4.0.1
+- update dependency curl/curl to v8.21.0
+* Thu Jun 04 2026 pyama86 <www.kazu.com@gmail.com> - 2.6.10-1
+- fix buffer overflow and NULL dereference caused by server responses
+- update dependency openssl/openssl to v4.0
+- update dependency curl/curl to v8.20.0
+- update dependency madler/zlib to v1.3.2
+* Tue Jan 13 2026 pyama86 <www.kazu.com@gmail.com> - 2.6.9-1
+- update dependency openssl/openssl to v3.6.0
+- update dependency curl/curl to v8.18.0
 * Tue Oct 08 2024 pyama86 <www.kazu.com@gmail.com> - 2.6.8-1
 - update dependency curl/curl to v8.10.1
 - update dependency openssl/openssl to v3.3.1

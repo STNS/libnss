@@ -1,3 +1,27 @@
+libnss-stns-v2 (2.6.11-1) jammy; urgency=medium
+
+  * add Ubuntu 26.04 (resolute) support
+  * update dependency openssl/openssl to v4.0.1
+  * update dependency curl/curl to v8.21.0
+
+ -- pyama86 <www.kazu.com@gmail.com>  Tue, 25 Aug 2026 12:00:00 +0900
+
+libnss-stns-v2 (2.6.10-1) jammy; urgency=high
+
+  * fix buffer overflow and NULL dereference caused by server responses
+  * update dependency openssl/openssl to v4.0
+  * update dependency curl/curl to v8.20.0
+  * update dependency madler/zlib to v1.3.2
+
+ -- pyama86 <www.kazu.com@gmail.com>  Thu, 04 Jun 2026 12:00:00 +0900
+
+libnss-stns-v2 (2.6.9-1) jammy; urgency=medium
+
+  * update dependency openssl/openssl to v3.6.0
+  * update dependency curl/curl to v8.18.0
+
+ -- pyama86 <www.kazu.com@gmail.com>  Tue, 13 Jan 2026 12:00:00 +0900
+
 libnss-stns-v2 (2.6.8-1) jammy; urgency=high
 
   * update dependency curl/curl to v8.10.1
