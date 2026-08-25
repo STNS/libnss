@@ -8,31 +8,29 @@ env:
 name: Release
 jobs:
   build:
-    timeout-minutes: 1440
+    timeout-minutes: 120
     strategy:
       matrix:
-        arch:
-          - arm64
-          - amd64
-    runs-on: ubuntu-latest
+        include:
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+          - arch: amd64
+            runner: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4
-        with:
-            platforms: linux/${{ matrix.arch}}
       - name: build
         run: make pkg
         env:
-          DOCKER_DEFAULT_PLATFORM: linux/${{ matrix.arch}}
+          DOCKER_DEFAULT_PLATFORM: linux/${{ matrix.arch }}
       - name: donwload ghr
         run: |
-          curl -L -O -s https://github.com/tcnksm/ghr/releases/download/v0.16.2/ghr_v0.16.2_linux_amd64.tar.gz
-          tar zxf ghr_v0.16.2_linux_amd64.tar.gz
-          sudo mv ghr_v0.16.2_linux_amd64/ghr /usr/bin
+          curl -L -O -s https://github.com/tcnksm/ghr/releases/download/v0.16.2/ghr_v0.16.2_linux_${{ matrix.arch }}.tar.gz
+          tar zxf ghr_v0.16.2_linux_${{ matrix.arch }}.tar.gz
+          sudo mv ghr_v0.16.2_linux_${{ matrix.arch }}/ghr /usr/bin
       - name: release
         run: make github_release

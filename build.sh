@@ -6,58 +6,72 @@ CONCURRENT_LIMIT=5
 # サービス名の配列を取得
 services=($(docker compose config --services))
 
-# 各サービスをビルドする（省略可能）
+# 失敗したサービス名を記録する
+failed=()
+
+# 各サービスをビルドする
 for service in "${services[@]}"; do
-    docker compose build "$service"
+    if ! docker compose build "$service"; then
+        echo "Build failed: $service" >&2
+        failed+=("$service")
+    fi
 done
 
 # 起動ジョブの制御用関連変数の初期化
 declare -A pids
-declare -A services_started
 
 # サービスを起動する関数
 start_service() {
     local service="$1"
     echo "Starting service: $service"
-    docker compose up "$service" &
+    # --exit-code-from でコンテナの終了コードを docker compose の終了コードに反映する
+    docker compose up --exit-code-from "$service" "$service" &
     pids[$!]=$service
-    services_started[$service]=1
 }
 
-# ジョブが終了したか監視し、終わっていれば別のサービスを起動する関数
-watch_jobs() {
-    while [ ${#pids[@]} -ge $CONCURRENT_LIMIT ]; do
+# ジョブが1つ終了するまで待ち、終了コードを記録する関数
+wait_one_job() {
+    local pid service
+    while true; do
         for pid in "${!pids[@]}"; do
             if ! kill -0 "$pid" 2>/dev/null; then
-                # ジョブが存在しない場合
-                local finished_service=${pids[$pid]}
-                echo "Service $finished_service finished"
-                unset pids[$pid]
+                service=${pids[$pid]}
+                unset "pids[$pid]"
+                if wait "$pid"; then
+                    echo "Service $service finished"
+                else
+                    echo "Service $service failed" >&2
+                    failed+=("$service")
+                fi
                 return 0
             fi
         done
         # 全てのジョブが実行中の場合、短いスリープ後に再確認
         sleep 1
     done
-
-    return 1
 }
 
 # サービスを起動する
 for service in "${services[@]}"; do
-    # 既に起動されているかチェック
-    if [[ ! ${services_started[$service]} ]]; then
-        # 現在実行しているジョブの数がCONCURRENT_LIMIT未満時、またはジョブの終了を検出したときに新しいサービスを起動
-        if [[ ${#pids[@]} -lt $CONCURRENT_LIMIT ]] || watch_jobs; then
-            start_service "$service"
-        fi
+    # イメージのビルドに失敗したサービスは起動しない
+    if [[ " ${failed[*]} " == *" $service "* ]]; then
+        continue
     fi
+    # 実行中のジョブ数が CONCURRENT_LIMIT に達している間は終了を待つ
+    while [ ${#pids[@]} -ge $CONCURRENT_LIMIT ]; do
+        wait_one_job
+    done
+    start_service "$service"
 done
 
 # 全てのジョブが終了するまで待機
-for pid in "${!pids[@]}"; do
-    wait "$pid"
-    echo "Service ${pids[$pid]} finished"
+while [ ${#pids[@]} -gt 0 ]; do
+    wait_one_job
 done
 
-echo "All services have been started."
+if [ ${#failed[@]} -gt 0 ]; then
+    echo "The following services failed: ${failed[*]}" >&2
+    exit 1
+fi
+
+echo "All services have been completed successfully."
