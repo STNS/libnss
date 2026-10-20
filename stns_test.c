@@ -224,6 +224,39 @@ Test(stns_exec_cmd, ok)
   free(r.data);
 }
 
+Test(stns_exec_cmd, large_output)
+{
+  const int lines    = 20;
+  const int line_len = 1024;
+  char *expect       = (char *)malloc(lines * line_len + 1);
+  int i;
+  for (i = 0; i < lines; i++) {
+    memset(expect + i * line_len, 'a', line_len - 1);
+    expect[(i + 1) * line_len - 1] = '\n';
+  }
+  expect[lines * line_len] = '\0';
+
+  stns_response_t r;
+  r.data  = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
+  int ret = stns_exec_cmd("test/dummy_large.sh", "test", &r);
+
+  cr_assert_eq(ret, 0);
+  cr_assert_eq(r.size, lines * line_len);
+  cr_assert_str_eq(r.data, expect);
+  free(r.data);
+  free(expect);
+}
+
+Test(stns_exec_cmd, invalid_arg)
+{
+  stns_response_t r;
+  r.data  = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
+  int ret = stns_exec_cmd("test/dummy.sh", "users?name=foo-bar", &r);
+
+  cr_assert_eq(ret, 1);
+  free(r.data);
+}
+
 Test(query_available, ok)
 {
   set_user_highest_id(10);

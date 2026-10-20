@@ -663,7 +663,7 @@ int stns_exec_cmd(char *cmd, char *arg, stns_response_t *r)
   r->status_code = (long)200;
 
   if (!match("^[a-zA-Z0-9_.=\?]+$", arg)) {
-    return 0;
+    return 1;
   }
 
 #ifdef DEBUG
@@ -693,8 +693,13 @@ int stns_exec_cmd(char *cmd, char *arg, stns_response_t *r)
 #ifdef DEBUG
     syslog(LOG_ERR, "%s(stns)[L%d] before malloc", __func__, __LINE__);
 #endif
-    if (total_len > STNS_DEFAULT_BUFFER_SIZE) {
-      r->data = (char *)realloc(r->data, total_len + len + 1);
+    if (total_len + len + 1 > STNS_DEFAULT_BUFFER_SIZE) {
+      char *resized = (char *)realloc(r->data, total_len + len + 1);
+      if (resized == NULL) {
+        pclose(fp);
+        goto err;
+      }
+      r->data = resized;
     }
 #ifdef DEBUG
     syslog(LOG_ERR, "%s(stns)[L%d] after malloc", __func__, __LINE__);
