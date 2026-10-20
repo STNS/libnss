@@ -83,6 +83,7 @@ extern void stns_unload_config(stns_conf_t *);
 extern int stns_request(stns_conf_t *, char *, stns_response_t *);
 extern int stns_request_available(char *, stns_conf_t *);
 extern void stns_make_lockfile(char *);
+extern void stns_export_file(char *, char *, char *);
 extern int stns_exec_cmd(char *, char *, stns_response_t *);
 extern int stns_user_highest_query_available(int);
 extern int stns_user_lowest_query_available(int);

@@ -439,11 +439,18 @@ int stns_request_available(char *path, stns_conf_t *c)
 
 void stns_make_lockfile(char *path)
 {
-  FILE *fp;
-  fp = fopen(path, "w");
-  if (fp) {
-    fclose(fp);
+  int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW,
+                S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+  if (fd != -1) {
+    close(fd);
   }
+}
+
+static int stns_cache_dir_is_safe(const char *dir)
+{
+  struct stat statbuf;
+  return lstat(dir, &statbuf) == 0 && S_ISDIR(statbuf.st_mode) && statbuf.st_uid == geteuid() &&
+         (statbuf.st_mode & (S_IWGRP | S_IWOTH)) == 0;
 }
 
 // base: https://github.com/linyows/octopass/blob/master/octopass.c
@@ -457,28 +464,33 @@ void stns_export_file(char *dir, char *file, char *data)
     umask(um);
   }
 
-  if (stat(file, &statbuf) == 0 && statbuf.st_uid != geteuid()) {
+  if (!stns_cache_dir_is_safe(dir)) {
+    syslog(LOG_ERR, "%s(stns)[L%d] unsafe cache dir %s", __func__, __LINE__, dir);
     return;
   }
 
-  FILE *fp = fopen(file, "w");
+  int fd = open(file, O_WRONLY | O_CREAT | O_NOFOLLOW, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IROTH);
+  if (fd == -1) {
+    syslog(LOG_ERR, "%s(stns)[L%d] cannot open %s", __func__, __LINE__, file);
+    return;
+  }
+
+  if (fstat(fd, &statbuf) != 0 || statbuf.st_uid != geteuid() || ftruncate(fd, 0) != 0) {
+    close(fd);
+    return;
+  }
+
+  FILE *fp = fdopen(fd, "w");
   if (!fp) {
     syslog(LOG_ERR, "%s(stns)[L%d] cannot open %s", __func__, __LINE__, file);
+    close(fd);
     return;
   }
   if (data != NULL) {
     fprintf(fp, "%s", data);
   }
+  fchmod(fd, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IROTH);
   fclose(fp);
-
-  mode_t um = {0};
-  um        = umask(0);
-  int fd    = open(file, O_RDONLY);
-  if (fd != -1) {
-    fchmod(fd, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IROTH);
-    close(fd);
-  }
-  umask(um);
 }
 
 // base: https://github.com/linyows/octopass/blob/master/octopass.c
@@ -575,7 +587,7 @@ int stns_request(stns_conf_t *c, char *path, stns_response_t *res)
   syslog(LOG_ERR, "%s(stns)[L%d] after free", __func__, __LINE__);
 #endif
 
-  if (c->cache && !c->cached_enable) {
+  if (c->cache && !c->cached_enable && stns_cache_dir_is_safe(dpath)) {
     struct stat statbuf;
     if (stat(fpath, &statbuf) == 0 && statbuf.st_uid == geteuid()) {
       unsigned long now  = time(NULL);
