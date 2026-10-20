@@ -360,16 +360,14 @@ static CURLcode inner_http_request(stns_conf_t *c, char *path, stns_response_t *
     if (c->password != NULL) {
       curl_easy_setopt(curl, CURLOPT_PASSWORD, c->password);
     }
-
-    if (c->http_proxy != NULL) {
-      curl_easy_setopt(curl, CURLOPT_PROXY, c->http_proxy);
-    }
   } else {
     curl_easy_setopt(curl, CURLOPT_UNIX_SOCKET_PATH, c->cached_unix_socket);
     url = (char *)malloc(strnlen("http://unix", STNS_MAX_BUFFER_SIZE) + strnlen(path, STNS_MAX_BUFFER_SIZE) + 2);
     snprintf(url, strnlen("http://unix", STNS_MAX_BUFFER_SIZE) + strnlen(path, STNS_MAX_BUFFER_SIZE) + 2, "%s/%s",
              "http://unix", path);
   }
+  // Do not use proxy settings from environment variables
+  curl_easy_setopt(curl, CURLOPT_PROXY, (!c->cached_enable && c->http_proxy != NULL) ? c->http_proxy : "");
   curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L);
   curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long)c->request_timeout);
