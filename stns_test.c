@@ -224,6 +224,104 @@ Test(stns_exec_cmd, ok)
   free(r.data);
 }
 
+Test(stns_exec_cmd, large_output)
+{
+  const int lines    = 20;
+  const int line_len = 1024;
+  char *expect       = (char *)malloc(lines * line_len + 1);
+  int i;
+  for (i = 0; i < lines; i++) {
+    memset(expect + i * line_len, 'a', line_len - 1);
+    expect[(i + 1) * line_len - 1] = '\n';
+  }
+  expect[lines * line_len] = '\0';
+
+  stns_response_t r;
+  r.data  = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
+  int ret = stns_exec_cmd("test/dummy_large.sh", "test", &r);
+
+  cr_assert_eq(ret, 0);
+  cr_assert_eq(r.size, lines * line_len);
+  cr_assert_str_eq(r.data, expect);
+  free(r.data);
+  free(expect);
+}
+
+Test(stns_exec_cmd, invalid_arg)
+{
+  stns_response_t r;
+  r.data  = (char *)malloc(STNS_DEFAULT_BUFFER_SIZE);
+  int ret = stns_exec_cmd("test/dummy.sh", "users?name=foo-bar", &r);
+
+  cr_assert_eq(ret, 1);
+  free(r.data);
+}
+
+Test(stns_export_file, owner_only_dir)
+{
+  char *dir  = "/tmp/stns_export_test_owner_only";
+  char *file = "/tmp/stns_export_test_owner_only/data";
+  struct stat st;
+  unlink(file);
+  rmdir(dir);
+  mkdir(dir, S_IRWXU);
+  chmod(dir, S_IRWXU);
+
+  stns_export_file(dir, file, "test");
+
+  char *result = (char *)calloc(MAXBUF, 1);
+  readfile(file, &result);
+  cr_assert_str_eq(result, "test");
+  cr_assert_eq(stat(file, &st), 0);
+  cr_assert_eq(st.st_mode & 0777, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IROTH);
+  free(result);
+  unlink(file);
+  rmdir(dir);
+}
+
+Test(stns_export_file, group_or_other_writable_dir)
+{
+  char *dirs[]   = {"/tmp/stns_export_test_group_writable", "/tmp/stns_export_test_other_writable"};
+  char *files[]  = {"/tmp/stns_export_test_group_writable/data", "/tmp/stns_export_test_other_writable/data"};
+  mode_t modes[] = {S_IRWXU | S_IWGRP, S_IRWXU | S_IWOTH};
+  struct stat st;
+  int i;
+  for (i = 0; i < 2; i++) {
+    unlink(files[i]);
+    rmdir(dirs[i]);
+    mkdir(dirs[i], S_IRWXU);
+    chmod(dirs[i], modes[i]);
+
+    stns_export_file(dirs[i], files[i], "test");
+
+    cr_assert_eq(stat(files[i], &st), -1);
+    unlink(files[i]);
+    rmdir(dirs[i]);
+  }
+}
+
+Test(stns_export_file, symlink_dir)
+{
+  char *target      = "/tmp/stns_export_test_symlink_target";
+  char *link_dir    = "/tmp/stns_export_test_symlink";
+  char *file        = "/tmp/stns_export_test_symlink/data";
+  char *target_file = "/tmp/stns_export_test_symlink_target/data";
+  struct stat st;
+  unlink(target_file);
+  unlink(link_dir);
+  rmdir(target);
+  mkdir(target, S_IRWXU);
+  chmod(target, S_IRWXU);
+  cr_assert_eq(symlink(target, link_dir), 0);
+
+  stns_export_file(link_dir, file, "test");
+
+  cr_assert_eq(stat(target_file, &st), -1);
+  unlink(target_file);
+  unlink(link_dir);
+  rmdir(target);
+}
+
 Test(query_available, ok)
 {
   set_user_highest_id(10);
