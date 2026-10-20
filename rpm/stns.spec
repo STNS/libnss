@@ -1,6 +1,6 @@
 Summary:          SimpleTomlNameService Nss Module
 Name:             libnss-stns-v2
-Version:          2.6.11
+Version:          2.6.12
 Release:          1
 License:          GPLv3
 URL:              https://github.com/STNS/STNS
@@ -60,6 +60,12 @@ sed -i "s/^IPAddressDeny=any/#IPAddressDeny=any/" /lib/systemd/system/systemd-lo
 %config(noreplace) /etc/stns/client/stns.conf
 
 %changelog
+* Tue Oct 20 2026 pyama86 <www.kazu.com@gmail.com> - 2.6.12-1
+- ignore proxy environment variables unless http_proxy is configured in stns.conf
+- fix buffer growth in command output handling
+- validate cache directory before using cache files
+- update dependency openssl/openssl to v4.0.3
+- update dependency curl/curl to v8.23.0
 * Tue Aug 25 2026 pyama86 <www.kazu.com@gmail.com> - 2.6.11-1
 - add Ubuntu 26.04 (resolute) support
 - update dependency openssl/openssl to v4.0.1

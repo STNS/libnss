@@ -1,3 +1,13 @@
+libnss-stns-v2 (2.6.12-1) jammy; urgency=high
+
+  * ignore proxy environment variables unless http_proxy is configured in stns.conf
+  * fix buffer growth in command output handling
+  * validate cache directory before using cache files
+  * update dependency openssl/openssl to v4.0.3
+  * update dependency curl/curl to v8.23.0
+
+ -- pyama86 <www.kazu.com@gmail.com>  Tue, 20 Oct 2026 12:00:00 +0900
+
 libnss-stns-v2 (2.6.11-1) jammy; urgency=medium
 
   * add Ubuntu 26.04 (resolute) support

@@ -2,6 +2,12 @@
 ## [Unreleased]
 
 
+<a name="v2.6.12"></a>
+## [v2.6.12] - 2026-10-20
+### Pull Requests
+- Merge pull request [#145](https://github.com/STNS/STNS/issues/145) from STNS/fix/security-hardening
+
+
 <a name="v2.6.11"></a>
 ## [v2.6.11] - 2026-08-25
 ### Pull Requests
@@ -208,7 +214,8 @@
 <a name="v2.0.3"></a>
 ## v2.0.3 - 2019-01-01
 
-[Unreleased]: https://github.com/STNS/STNS/compare/v2.6.11...HEAD
+[Unreleased]: https://github.com/STNS/STNS/compare/v2.6.12...HEAD
+[v2.6.12]: https://github.com/STNS/STNS/compare/v2.6.11...v2.6.12
 [v2.6.11]: https://github.com/STNS/STNS/compare/v2.6.10...v2.6.11
 [v2.6.10]: https://github.com/STNS/STNS/compare/v2.6.9...v2.6.10
 [v2.6.9]: https://github.com/STNS/STNS/compare/v2.6.8...v2.6.9
